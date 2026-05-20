@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Delete, Settings2, Calculator as CalcIcon, Menu, Pill, Crown } from 'lucide-react';
+import { Delete, Settings2, Calculator as CalcIcon, Menu, Pill, Crown, Trash2 } from 'lucide-react';
 import { Preset, HistoryItem } from './types';
 import { PresetModal } from './components/PresetModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -27,6 +27,7 @@ const calculateMath = (a: number, b: number, op: string) => {
 };
 
 const formatResult = (num: number) => {
+   if (Number.isNaN(num)) return "Sai logic toán";
    if (!isFinite(num)) return String(num);
    if (num % 1 !== 0) {
       const strForm = num.toString();
@@ -237,6 +238,9 @@ export default function App() {
   const renderColoredExpression = (expression: string) => {
      return expression.split('').map((char, i) => {
         if (['+', '-', '×', ':'].includes(char)) {
+            if (i === expression.length - 1) {
+                return <span key={i} className="inline-flex items-center justify-center bg-slate-800 text-white shadow-inner text-[0.3em] align-top ml-[4px] mt-[10px] font-black w-[1.3em] h-[1.3em] rounded-[4px] pb-[1px]">{char}</span>;
+            }
             return <span key={i} className={`${t.operatorColor} mx-[1px]`}>{char}</span>;
         }
         if (char === '*') {
@@ -292,7 +296,7 @@ export default function App() {
         return;
     }
     setExpr(prev => {
-        if (prev === '0' || prev === 'NaN' || prev === 'Infinity' || prev === '-Infinity') return digit;
+        if (prev === '0' || prev === 'Sai logic toán' || prev === 'Infinity' || prev === '-Infinity') return digit;
         if (/[\+\-\×\:]0$/.test(prev)) {
             return prev.slice(0, -1) + digit;
         }
@@ -304,7 +308,7 @@ export default function App() {
      setIsResult(false);
      setExpr(prev => {
         let p = prev.replace(/\*/g, '');
-        if (p === 'NaN' || p === 'Infinity' || p === '-Infinity') return '0' + op;
+        if (p === 'Sai logic toán' || p === 'Infinity' || p === '-Infinity') return '0' + op;
         if (/[\+\-\×\:]$/.test(p)) {
            return p.slice(0, -1) + op;
         }
@@ -350,7 +354,7 @@ export default function App() {
          setExpr(resultStr);
          setIsResult(true);
       } catch(e) {
-         setExpr('NaN');
+         setExpr('Sai logic toán');
          setExprIsMl(false);
          setIsResult(true);
       }
@@ -639,12 +643,23 @@ export default function App() {
           ref={tapeRef}
           className="flex-1 min-h-0 overflow-y-auto flex flex-col custom-scrollbar scroll-smooth relative"
         >
-           <div className="flex-1 p-4 pt-12 pb-6 space-y-3 flex flex-col">
+           <div className="flex-1 p-4 pt-14 pb-6 space-y-3 flex flex-col">
              {history.length === 0 && (
                 <div className="m-auto text-center text-slate-400 p-6">
                    <CalcIcon className="w-10 h-10 mx-auto mb-3 opacity-20" />
                    <p className="text-[14px] font-bold text-slate-500">Son Calculator 2.0</p>
                    <p className="text-xs mt-1 max-w-[250px] mx-auto leading-relaxed">Máy tính này được thiết kế để phục vụ lâm sàng hàng ngày của Bác sĩ Đỗ Tiến Sơn.</p>
+                </div>
+             )}
+             {history.length > 0 && (
+                <div className="flex justify-end -mt-2">
+                   <button 
+                     onClick={() => setHistory([])}
+                     className="text-xs font-bold text-slate-400 hover:text-red-500 px-3 py-1.5 bg-white shadow-sm border border-slate-100 hover:border-red-100 rounded-full transition-colors flex items-center gap-1"
+                   >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Xóa lịch sử
+                   </button>
                 </div>
              )}
              {history.map(item => (
@@ -793,7 +808,7 @@ export default function App() {
                   
                   <Btn onClick={() => inputDigit('0')} className={`${t.btnNum} `}>0</Btn>
                   <Btn onClick={inputDot} className={`${t.btnNum} pb-3 text-4xl`}>.</Btn>
-                  <Btn onClick={handleEqual} className={`${isPremium ? 'bg-gradient-to-b from-amber-400 to-amber-500 text-amber-950 shadow-[0_4px_15px_rgba(245,158,11,0.5)] border-2 border-amber-300 animate-pulse' : t.btnEq} font-black rounded-2xl col-span-2 shadow-md text-4xl flex items-center justify-center`}>
+                  <Btn onClick={handleEqual} className={`${isPremium ? 'bg-gradient-to-b from-amber-400 to-amber-500 text-amber-950 shadow-[0_4px_15px_rgba(245,158,11,0.5)] border-2 border-amber-300' : t.btnEq} font-black rounded-2xl col-span-2 shadow-md text-4xl flex items-center justify-center`}>
                     =
                   </Btn>
                 </div>
