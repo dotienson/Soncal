@@ -41,10 +41,10 @@ const formatResult = (num: number) => {
    return num.toString();
 };
 
-const Btn = ({ onClick, className = "", children, isSmall = false }: any) => (
+const Btn = ({ onClick, className = "", children }: any) => (
   <button
     onClick={onClick}
-    className={`active:scale-95 transition-all flex items-center justify-center font-medium shadow-sm select-none ${isSmall ? 'rounded-xl h-[3.25rem]' : 'rounded-2xl h-[4rem] md:h-16 text-3xl'} ${className}`}
+    className={`active:scale-95 transition-all flex items-center justify-center font-medium shadow-sm select-none rounded-2xl h-[4rem] md:h-16 text-3xl ${className}`}
   >
     {children}
   </button>
@@ -65,8 +65,6 @@ export default function App() {
   const [expr, setExpr] = useState('0');
   const [isResult, setIsResult] = useState(false);
   const [showIdleOverlay, setShowIdleOverlay] = useState(false);
-  const [oneHandedMode, setOneHandedMode] = useState<'off' | 'right' | 'left'>('off');
-  const isOneHanded = oneHandedMode !== 'off';
 
   useEffect(() => {
     let idleTimer: ReturnType<typeof setTimeout>;
@@ -252,42 +250,6 @@ export default function App() {
        }
        return prev;
     });
-  };
-
-  const [lastEqualTap, setLastEqualTap] = useState(0);
-  const [lastDotTap, setLastDotTap] = useState(0);
-
-  const handleEqualDoubleTap = () => {
-     const now = Date.now();
-     if (now - lastEqualTap < 300) {
-        setOneHandedMode(prev => prev === 'off' ? 'right' : 'off');
-        setHistory(prev => {
-           const lastItem = prev[0];
-           if (lastItem && lastItem.type === 'math' && Date.now() - parseInt(lastItem.id) < 300) {
-              return prev.slice(1);
-           }
-           return prev;
-        });
-        setLastEqualTap(0);
-     } else {
-        handleEqual();
-        setLastEqualTap(now);
-     }
-  };
-
-  const handleDotDoubleTap = () => {
-     const now = Date.now();
-     if (now - lastDotTap < 300) {
-        setOneHandedMode(prev => prev === 'off' ? 'left' : 'off');
-        setExpr(prev => {
-            if (prev.length <= 1) return '0';
-            return prev.slice(0, -1);
-        });
-        setLastDotTap(0);
-     } else {
-        inputDot();
-        setLastDotTap(now);
-     }
   };
 
   const handleEqual = () => {
@@ -547,55 +509,49 @@ export default function App() {
           </div>
         )}
 
+        {/* Flag Ribbons Overlay */}
+        <div className="absolute top-0 right-6 z-30 flex justify-end gap-2 drop-shadow-md pointer-events-none">
+           <div className="bg-amber-100/95 backdrop-blur-md border border-t-0 border-amber-300 rounded-b-xl px-2 pb-1.5 pt-1 flex flex-col items-center pointer-events-auto shadow-sm">
+              <div className="flex items-center">
+                 <input
+                    id="weight-input"
+                    type="number"
+                    inputMode="decimal"
+                    value={weightStr}
+                    onChange={(e) => setWeightStr(e.target.value)}
+                    className="w-10 bg-transparent text-amber-900 text-center font-black text-base outline-none placeholder:text-amber-900/40"
+                    placeholder="--"
+                 />
+                 <span className="text-amber-800 font-bold text-[11px] select-none -ml-1 pr-1">kg</span>
+              </div>
+           </div>
+
+           <div className="bg-slate-200/95 backdrop-blur-md border border-t-0 border-slate-300 rounded-b-xl px-2 pb-1.5 pt-1 flex flex-col items-center pointer-events-auto shadow-sm">
+              <div className="flex items-center h-full relative">
+                 <select
+                    id="days-input"
+                    value={daysStr}
+                    onChange={(e) => setDaysStr(e.target.value)}
+                    className="bg-transparent text-slate-800 font-black text-base outline-none cursor-pointer appearance-none text-center pl-2 pr-1 z-10"
+                 >
+                    <option value="">-</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                 </select>
+                 <span className="text-slate-600 font-bold text-[11px] pointer-events-none select-none pr-1">ngày</span>
+              </div>
+           </div>
+        </div>
+
         {/* History Tape Area with Top Weight Box */}
         <div 
           ref={tapeRef}
           className="flex-1 overflow-y-auto flex flex-col custom-scrollbar scroll-smooth relative"
         >
-           {/* Sticky Box Cảnh Báo Cân Nặng */}
-           <div className="sticky top-0 z-20 w-full p-2 pt-4 md:pt-2 bg-gradient-to-b from-slate-50 via-slate-50/90 to-transparent">
-             <div className="flex gap-2">
-                 <div className="bg-amber-100/90 backdrop-blur-sm border border-amber-200 shadow-sm rounded-lg p-1.5 px-2 sm:px-2.5 flex items-center justify-between flex-1">
-                    <label htmlFor="weight-input" className="text-amber-800 font-bold text-xs flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
-                       <span>⚠️</span> 
-                       <span className="hidden sm:inline">Cân nặng bé:</span>
-                       <span className="sm:hidden">Cân nặng:</span>
-                    </label>
-                    <div className="flex items-center bg-white/70 rounded-md pr-1.5 sm:pr-2 focus-within:ring-2 focus-within:ring-amber-400 transition-all border border-amber-200/50 ml-1">
-                       <input
-                          id="weight-input"
-                          type="number"
-                          inputMode="decimal"
-                          value={weightStr}
-                          onChange={(e) => setWeightStr(e.target.value)}
-                          className="w-10 sm:w-12 bg-transparent text-amber-900 text-right font-black text-base outline-none placeholder:text-amber-900/30 py-0.5"
-                          placeholder="0.0"
-                       />
-                       <span className="text-amber-800 font-bold ml-1 text-[10px]">kg</span>
-                    </div>
-                 </div>
-
-                 <div className="bg-slate-200/80 backdrop-blur-sm border border-slate-300 shadow-sm rounded-lg p-1.5 flex items-center shrink-0">
-                    <div className="flex items-center bg-white/80 rounded-md focus-within:ring-2 focus-within:ring-slate-400 transition-all border border-slate-300/50 h-full px-1.5 py-0.5">
-                       <select
-                          id="days-input"
-                          value={daysStr}
-                          onChange={(e) => setDaysStr(e.target.value)}
-                          className="bg-transparent text-slate-700 font-bold text-xs outline-none w-full h-full cursor-pointer appearance-none text-center"
-                       >
-                          <option value="">Liệu trình</option>
-                          <option value="3">3 ngày</option>
-                          <option value="4">4 ngày</option>
-                          <option value="5">5 ngày</option>
-                          <option value="6">6 ngày</option>
-                          <option value="7">7 ngày</option>
-                       </select>
-                    </div>
-                 </div>
-             </div>
-           </div>
-
-           <div className="flex-1 p-4 pb-6 space-y-3 flex flex-col">
+           <div className="flex-1 p-4 pt-12 pb-6 space-y-3 flex flex-col">
              {history.length === 0 && (
                 <div className="m-auto text-center text-slate-400 p-6">
                    <CalcIcon className="w-10 h-10 mx-auto mb-3 opacity-20" />
@@ -639,10 +595,10 @@ export default function App() {
                </div>
             </div>
 
-            {/* Controls Wrap (Shrinks for one-handed mode) */}
-            <div className={`transition-all duration-300 flex flex-col ${isOneHanded ? `w-[85%] ${oneHandedMode === 'right' ? 'ml-auto' : 'mr-auto'}` : 'w-full'}`}>
+            {/* Controls Wrap */}
+            <div className={`transition-all duration-300 flex flex-col w-full`}>
               {/* Presets Bar */}
-              <div className={`border-y border-slate-100 bg-slate-50 flex overflow-x-auto hide-scrollbar ${isOneHanded ? 'gap-1.5 px-3 py-1.5' : 'gap-2 px-4 py-2.5'}`} style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className={`border-y border-slate-100 bg-slate-50 flex overflow-x-auto hide-scrollbar gap-2 px-4 py-2.5`} style={{ WebkitOverflowScrolling: 'touch' }}>
                  {presets.map(p => {
                     const isTamiflu = p.id === 'tamiflu';
                     const btnBg = isTamiflu ? 'bg-amber-100 border-amber-200 text-amber-800' : 'bg-white border-slate-200 text-slate-700';
@@ -650,59 +606,59 @@ export default function App() {
                     return (
                     <button 
                        key={p.id} 
-                       className={`flex-shrink-0 border font-bold shadow-sm active:scale-95 transition-all flex items-center gap-2 ${btnBg} ${isOneHanded ? 'px-2.5 py-1.5 rounded-lg text-xs' : 'px-3.5 py-2 rounded-xl text-[13px]'}`}
+                       className={`flex-shrink-0 border font-bold shadow-sm active:scale-95 transition-all flex items-center gap-2 ${btnBg} px-3.5 py-2 rounded-xl text-[13px]`}
                     >
                        <span onClick={() => handlePresetClick(p)} className="block pr-1 py-0.5 leading-none">{p.name}</span>
                        {!isTamiflu && (
                          <div 
                            onClick={(e) => { e.stopPropagation(); setEditingPreset(p); setModalOpen(true); }}
-                           className={`border-l py-0.5 ${iconColor} ${isOneHanded ? 'pl-1.5' : 'pl-2'}`}
+                           className={`border-l py-0.5 ${iconColor} pl-2`}
                          >
-                           <Settings2 className={isOneHanded ? 'w-3.5 h-3.5' : 'w-[16px] h-[16px]'} />
+                           <Settings2 className={'w-[16px] h-[16px]'} />
                          </div>
                        )}
                     </button>
                  )})}
                  <button 
-                    className={`flex-shrink-0 bg-blue-50 text-blue-700 border border-blue-100 font-bold rounded-xl active:scale-95 transition-transform flex items-center justify-center shadow-sm ${isOneHanded ? 'p-1.5' : 'p-2.5'}`}
+                    className={`flex-shrink-0 bg-blue-50 text-blue-700 border border-blue-100 font-bold rounded-xl active:scale-95 transition-transform flex items-center justify-center shadow-sm p-2.5`}
                     onClick={() => { setEditingPreset(null); setModalOpen(true); }}
                  >
-                    <Pill className={isOneHanded ? 'w-4 h-4' : 'w-5 h-5'} />
+                    <Pill className={'w-5 h-5'} />
                  </button>
                  <div className="flex-1"></div>
                  <button 
-                    className={`flex-shrink-0 bg-slate-100 text-slate-600 border border-slate-200 rounded-xl active:scale-95 transition-transform flex items-center justify-center shadow-sm ${isOneHanded ? 'p-1.5' : 'p-2'}`}
+                    className={`flex-shrink-0 bg-slate-100 text-slate-600 border border-slate-200 rounded-xl active:scale-95 transition-transform flex items-center justify-center shadow-sm p-2`}
                     onClick={() => setSettingsOpen(true)}
                  >
-                    <Settings2 className={isOneHanded ? 'w-4 h-4' : 'w-5 h-5'} />
+                    <Settings2 className={'w-5 h-5'} />
                  </button>
               </div>
   
               {/* Keypad */}
-              <div className={`${t.keypad} transition-all duration-500 relative ${isOneHanded ? 'p-2.5 pb-2.5' : 'p-4 pb-6 md:pb-4'}`}>
-                <div className={`grid grid-cols-4 transition-all duration-300 ${isOneHanded ? 'gap-1.5' : 'gap-2.5'}`}>
-                  <Btn isSmall={isOneHanded} onClick={() => clearAll(false)} className={`bg-red-50 text-red-600 font-black hover:bg-red-100 ${isOneHanded ? 'text-xl' : 'text-2xl'} col-span-2`}>AC</Btn>
-                  <Btn isSmall={isOneHanded} onClick={handleBackspace} className={`${t.btnAction} font-bold`}><Delete className={isOneHanded ? "w-5 h-5" : "w-7 h-7"} /></Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => performOperation('+')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>+</Btn>
+              <div className={`${t.keypad} transition-all duration-500 relative p-4 pb-6 md:pb-4`}>
+                <div className={`grid grid-cols-4 transition-all duration-300 gap-2.5`}>
+                  <Btn onClick={() => clearAll(false)} className={`bg-red-50 text-red-600 font-black hover:bg-red-100 text-2xl col-span-2`}>AC</Btn>
+                  <Btn onClick={handleBackspace} className={`${t.btnAction} font-bold`}><Delete className={"w-7 h-7"} /></Btn>
+                  <Btn onClick={() => performOperation('+')} className={`${t.btnOp} font-light pb-1 text-4xl`}>+</Btn>
                   
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('7')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>7</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('8')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>8</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('9')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>9</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => performOperation('-')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>−</Btn>
+                  <Btn onClick={() => inputDigit('7')} className={`${t.btnNum} `}>7</Btn>
+                  <Btn onClick={() => inputDigit('8')} className={`${t.btnNum} `}>8</Btn>
+                  <Btn onClick={() => inputDigit('9')} className={`${t.btnNum} `}>9</Btn>
+                  <Btn onClick={() => performOperation('-')} className={`${t.btnOp} font-light pb-1 text-4xl`}>−</Btn>
                   
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('4')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>4</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('5')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>5</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('6')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>6</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => performOperation('×')} className={`bg-yellow-400 text-yellow-900 hover:bg-yellow-500 shadow-md font-bold pt-1 border border-yellow-500 ${isOneHanded ? 'text-4xl' : 'text-5xl'}`}>×</Btn>
+                  <Btn onClick={() => inputDigit('4')} className={`${t.btnNum} `}>4</Btn>
+                  <Btn onClick={() => inputDigit('5')} className={`${t.btnNum} `}>5</Btn>
+                  <Btn onClick={() => inputDigit('6')} className={`${t.btnNum} `}>6</Btn>
+                  <Btn onClick={() => performOperation('×')} className={`bg-yellow-400 text-yellow-900 hover:bg-yellow-500 shadow-md font-bold pt-1 border border-yellow-500 text-5xl`}>×</Btn>
                   
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('1')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>1</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('2')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>2</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('3')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>3</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => performOperation(':')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>:</Btn>
+                  <Btn onClick={() => inputDigit('1')} className={`${t.btnNum} `}>1</Btn>
+                  <Btn onClick={() => inputDigit('2')} className={`${t.btnNum} `}>2</Btn>
+                  <Btn onClick={() => inputDigit('3')} className={`${t.btnNum} `}>3</Btn>
+                  <Btn onClick={() => performOperation(':')} className={`${t.btnOp} font-light pb-1 text-4xl`}>:</Btn>
                   
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('0')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>0</Btn>
-                  <Btn isSmall={isOneHanded} onClick={handleDotDoubleTap} className={`${t.btnNum} pb-3 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>.</Btn>
-                  <Btn isSmall={isOneHanded} onClick={handleEqualDoubleTap} className={`${t.btnEq} font-black rounded-2xl col-span-2 shadow-md ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>=</Btn>
+                  <Btn onClick={() => inputDigit('0')} className={`${t.btnNum} `}>0</Btn>
+                  <Btn onClick={inputDot} className={`${t.btnNum} pb-3 text-4xl`}>.</Btn>
+                  <Btn onClick={handleEqual} className={`${t.btnEq} font-black rounded-2xl col-span-2 shadow-md text-4xl`}>=</Btn>
                 </div>
               </div>
             </div>
