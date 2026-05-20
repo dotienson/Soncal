@@ -549,7 +549,7 @@ export default function App() {
         {/* History Tape Area with Top Weight Box */}
         <div 
           ref={tapeRef}
-          className="flex-1 overflow-y-auto flex flex-col custom-scrollbar scroll-smooth relative"
+          className="flex-1 min-h-0 overflow-y-auto flex flex-col custom-scrollbar scroll-smooth relative"
         >
            <div className="flex-1 p-4 pt-12 pb-6 space-y-3 flex flex-col">
              {history.length === 0 && (
