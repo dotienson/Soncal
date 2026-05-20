@@ -255,7 +255,7 @@ export default function App() {
   };
 
   const [lastEqualTap, setLastEqualTap] = useState(0);
-  const [lastZeroTap, setLastZeroTap] = useState(0);
+  const [lastDotTap, setLastDotTap] = useState(0);
 
   const handleEqualDoubleTap = () => {
      const now = Date.now();
@@ -275,18 +275,18 @@ export default function App() {
      }
   };
 
-  const handleZeroDoubleTap = () => {
+  const handleDotDoubleTap = () => {
      const now = Date.now();
-     if (now - lastZeroTap < 300) {
+     if (now - lastDotTap < 300) {
         setOneHandedMode(prev => prev === 'off' ? 'left' : 'off');
         setExpr(prev => {
             if (prev.length <= 1) return '0';
             return prev.slice(0, -1);
         });
-        setLastZeroTap(0);
+        setLastDotTap(0);
      } else {
-        inputDigit('0');
-        setLastZeroTap(now);
+        inputDot();
+        setLastDotTap(now);
      }
   };
 
@@ -457,8 +457,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <div className={`${t.wrapper} min-h-screen flex items-center justify-center p-0 md:p-4 font-sans transition-colors duration-500`}>
-      <div className={`${t.app} w-full max-w-md h-[100dvh] md:h-[840px] md:rounded-[2.5rem] shadow-[0_0_100px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden relative border-0 md:border-[8px] transition-colors duration-500`}>
+    <div className="bg-black min-h-[100dvh] w-full flex items-center justify-center font-sans tracking-tight px-1.5 sm:px-4 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)] overflow-hidden">
+      <div className={`${t.app} w-full h-full flex-1 sm:max-h-[840px] max-w-md rounded-[2.5rem] shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border border-[#2a2a2a]`}>
         
         {weightWarning && (
           <div className="absolute inset-0 z-[100] bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
@@ -681,7 +681,7 @@ export default function App() {
               {/* Keypad */}
               <div className={`${t.keypad} transition-all duration-500 relative ${isOneHanded ? 'p-2.5 pb-2.5' : 'p-4 pb-6 md:pb-4'}`}>
                 <div className={`grid grid-cols-4 transition-all duration-300 ${isOneHanded ? 'gap-1.5' : 'gap-2.5'}`}>
-                  <Btn isSmall={isOneHanded} onClick={() => clearAll(true)} className={`bg-red-50 text-red-600 font-black hover:bg-red-100 ${isOneHanded ? 'text-xl' : 'text-2xl'} col-span-2`}>AC</Btn>
+                  <Btn isSmall={isOneHanded} onClick={() => clearAll(false)} className={`bg-red-50 text-red-600 font-black hover:bg-red-100 ${isOneHanded ? 'text-xl' : 'text-2xl'} col-span-2`}>AC</Btn>
                   <Btn isSmall={isOneHanded} onClick={handleBackspace} className={`${t.btnAction} font-bold`}><Delete className={isOneHanded ? "w-5 h-5" : "w-7 h-7"} /></Btn>
                   <Btn isSmall={isOneHanded} onClick={() => performOperation('+')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>+</Btn>
                   
@@ -700,8 +700,8 @@ export default function App() {
                   <Btn isSmall={isOneHanded} onClick={() => inputDigit('3')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>3</Btn>
                   <Btn isSmall={isOneHanded} onClick={() => performOperation(':')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>:</Btn>
                   
-                  <Btn isSmall={isOneHanded} onClick={handleZeroDoubleTap} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>0</Btn>
-                  <Btn isSmall={isOneHanded} onClick={inputDot} className={`${t.btnNum} pb-3 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>.</Btn>
+                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('0')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>0</Btn>
+                  <Btn isSmall={isOneHanded} onClick={handleDotDoubleTap} className={`${t.btnNum} pb-3 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>.</Btn>
                   <Btn isSmall={isOneHanded} onClick={handleEqualDoubleTap} className={`${t.btnEq} font-black rounded-2xl col-span-2 shadow-md ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>=</Btn>
                 </div>
               </div>
