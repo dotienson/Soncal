@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Delete, Settings2, Calculator as CalcIcon, Menu, Pill } from 'lucide-react';
+import { Delete, Settings2, Calculator as CalcIcon, Menu, Pill, Crown } from 'lucide-react';
 import { Preset, HistoryItem } from './types';
 import { PresetModal } from './components/PresetModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -54,10 +54,12 @@ function gcd(a: number, b: number): number {
   return b ? gcd(b, a % b) : a;
 }
 
-function getFractionText(numStr: string): string | null {
+function getFractionText(numStr: string, isMl?: boolean): string | null {
   const num = parseFloat(numStr);
   if (isNaN(num) || !isFinite(num)) return null;
   if (Math.abs(Math.round(num) - num) < 0.01) return null; // effectively integer
+  if (Math.abs(num) >= 10) return null;
+  if (isMl) return null;
 
   const isNegative = num < 0;
   const absNum = Math.abs(num);
@@ -107,12 +109,12 @@ const BottomTicker = () => {
   }, []);
 
   return (
-    <div className="w-full text-center mt-1 mb-0 flex-shrink-0 px-2 overflow-hidden h-[16px]">
+    <div className="w-full text-center mt-1 mb-2 flex-shrink-0 px-2 overflow-hidden h-[24px]">
       <div 
         key={index} 
-        className="text-[10px] font-black tracking-widest text-amber-500 uppercase animate-pulse animate-in slide-in-from-bottom-2 fade-in duration-500"
+        className="text-[11px] font-black tracking-wide text-white uppercase animate-in slide-in-from-bottom-2 fade-in duration-500 bg-red-600 rounded-lg mx-auto max-w-[95%] py-0.5"
       >
-        {messages[index]}
+        ⚠️ {messages[index]}
       </div>
     </div>
   );
@@ -134,8 +136,13 @@ export default function App() {
   }, [daysStr]);
   
   const [expr, setExpr] = useState('0');
+  const [exprIsMl, setExprIsMl] = useState(false);
   const [isResult, setIsResult] = useState(false);
   const [showIdleOverlay, setShowIdleOverlay] = useState(false);
+  const [isPremium, setIsPremium] = useState<boolean>(() => localStorage.getItem('medCalc_premium') === 'true');
+  const [premiumModalOpen, setPremiumModalOpen] = useState(false);
+  const [premiumCode, setPremiumCode] = useState('');
+  const [premiumError, setPremiumError] = useState(false);
 
   useEffect(() => {
     let idleTimer: ReturnType<typeof setTimeout>;
@@ -278,6 +285,7 @@ export default function App() {
   };
 
   const inputDigit = (digit: string) => {
+    setExprIsMl(false);
     if (isResult) {
         setExpr(digit);
         setIsResult(false);
@@ -332,6 +340,7 @@ export default function App() {
       try {
          const resultNum = precision(Function(`'use strict'; return (${calcExpr})`)());
          const resultStr = formatResult(resultNum);
+         setExprIsMl(false);
          addHistory({
             id: Date.now().toString(),
             type: 'math',
@@ -342,6 +351,7 @@ export default function App() {
          setIsResult(true);
       } catch(e) {
          setExpr('NaN');
+         setExprIsMl(false);
          setIsResult(true);
       }
   };
@@ -351,6 +361,7 @@ export default function App() {
 
   const clearAll = (clearHist = false) => {
     setExpr('0');
+    setExprIsMl(false);
     setIsResult(false);
     setWeightStr('');
     setDaysStr('7');
@@ -446,6 +457,7 @@ export default function App() {
      });
      
      setExpr(formatResult(volume));
+     setExprIsMl(true);
      setIsResult(true);
   };
 
@@ -497,6 +509,7 @@ export default function App() {
      });
      
      setExpr(String(volume));
+     setExprIsMl(!preset.isSolid && preset.unit === 'mL');
      setIsResult(true);
   };
 
@@ -680,7 +693,7 @@ export default function App() {
         <div className="bg-white shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] z-20 flex-shrink-0 relative">
             {/* Calculator Display */}
             <div className="px-4 pb-3 pt-3 flex flex-col items-end">
-               <div className="w-full bg-slate-50 border-t-2 border-b border-x border-slate-200/80 border-t-slate-300 rounded-3xl py-2 px-4 shadow-[inset_0_4px_10px_rgba(0,0,0,0.06),0_1px_1px_rgba(255,255,255,1)]">
+               <div className={`w-full ${isPremium ? 'bg-amber-50/70 border-amber-200/80 border-t-amber-300 shadow-[inset_0_4px_10px_rgba(245,158,11,0.08),0_1px_1px_rgba(255,255,255,1)]' : 'bg-slate-50 border-slate-200/80 border-t-slate-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.06),0_1px_1px_rgba(255,255,255,1)]'} border-t-2 border-b border-x rounded-3xl py-2 px-4`}>
                    <div 
                      ref={displayRef}
                      className={`text-[3rem] leading-[1.1] font-black ${t.display} text-right tracking-tighter w-full overflow-x-auto hide-scrollbar whitespace-nowrap pt-1`}
@@ -735,10 +748,17 @@ export default function App() {
                     </button>
                  )})}
                  <button 
-                    className={`flex-shrink-0 bg-blue-50 text-blue-700 border border-blue-100 font-bold rounded-xl active:scale-95 transition-transform flex items-center justify-center shadow-sm p-2.5`}
-                    onClick={() => { setEditingPreset(null); setModalOpen(true); }}
+                    className={`flex-shrink-0 bg-blue-50 text-blue-700 border border-blue-100 font-bold rounded-xl active:scale-95 transition-transform flex items-center justify-center shadow-sm p-2.5 relative`}
+                    onClick={() => { 
+                       if (isPremium) {
+                         setEditingPreset(null); setModalOpen(true); 
+                       } else {
+                         setPremiumModalOpen(true);
+                       }
+                    }}
                  >
                     <Pill className={'w-5 h-5'} />
+                    {!isPremium && <Crown className="w-3 h-3 text-amber-500 absolute -top-1 -right-1" strokeWidth={3} fill="currentColor" />}
                  </button>
                  <div className="flex-1"></div>
                  <button 
@@ -773,7 +793,10 @@ export default function App() {
                   
                   <Btn onClick={() => inputDigit('0')} className={`${t.btnNum} `}>0</Btn>
                   <Btn onClick={inputDot} className={`${t.btnNum} pb-3 text-4xl`}>.</Btn>
-                  <Btn onClick={handleEqual} className={`${t.btnEq} font-black rounded-2xl col-span-2 shadow-md text-4xl`}>=</Btn>
+                  <Btn onClick={handleEqual} className={`${t.btnEq} font-black rounded-2xl col-span-2 shadow-md text-4xl flex items-center justify-center gap-1`}>
+                    =
+                    {isPremium && <Crown className="w-5 h-5 text-amber-500/80 mt-1" strokeWidth={2.5} />}
+                  </Btn>
                 </div>
               </div>
             </div>
@@ -788,6 +811,55 @@ export default function App() {
          theme={theme}
          setTheme={setTheme}
       />
+
+      {premiumModalOpen && (
+        <div className="absolute inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl border border-slate-200 flex flex-col items-center zoom-in-95">
+            <Crown className="w-12 h-12 text-amber-500 mb-4" />
+            <h2 className="text-slate-800 text-2xl font-black mb-2 text-center">Nâng cấp Premium</h2>
+            <p className="text-slate-500 text-sm text-center mb-6 font-medium leading-relaxed">
+              Bạn cần nhập mã kích hoạt để thêm <strong className="text-slate-800">thuốc mới</strong> không giới hạn!
+            </p>
+            <input 
+              value={premiumCode}
+              onChange={e => {
+                 setPremiumCode(e.target.value);
+                 setPremiumError(false);
+              }}
+              className={`w-full text-center tracking-widest font-mono text-xl border rounded-xl px-4 py-3 outline-none transition-colors ${premiumError ? 'border-red-500 bg-red-50 text-red-600' : 'border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-slate-800'}`}
+              placeholder="XXX-XXX"
+            />
+            {premiumError && <div className="text-red-500 text-xs font-bold mt-2">Mã kích hoạt không đúng!</div>}
+            
+            <div className="flex gap-4 w-full mt-6">
+              <button 
+                onClick={() => { setPremiumModalOpen(false); setPremiumCode(''); setPremiumError(false); }} 
+                className="flex-[1] bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 rounded-xl text-lg shadow-sm transition-colors border border-slate-200"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={() => {
+                   const code = premiumCode.trim();
+                   if (code.startsWith('2') && code.endsWith('3')) {
+                      setIsPremium(true);
+                      localStorage.setItem('medCalc_premium', 'true');
+                      setPremiumModalOpen(false);
+                      setPremiumCode('');
+                      setEditingPreset(null);
+                      setModalOpen(true);
+                   } else {
+                      setPremiumError(true);
+                   }
+                }} 
+                className="flex-[1.5] bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white font-bold py-3.5 rounded-xl text-lg shadow border border-amber-500"
+              >
+                Kích hoạt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <PresetModal 
         isOpen={modalOpen} 
