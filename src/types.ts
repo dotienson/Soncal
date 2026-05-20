@@ -9,6 +9,7 @@ export interface Preset {
   isSpecial?: boolean;
   isSolid?: boolean;
   color?: string;
+  maxDoseMg?: number;
 }
 
 export interface HistoryItem {
@@ -21,4 +22,7 @@ export interface HistoryItem {
   volumeNum?: number;
   timesPerDay?: number;
   unit?: string;
+  isMaxDoseLimited?: boolean;
+  maxDoseStr?: string;
 }
+

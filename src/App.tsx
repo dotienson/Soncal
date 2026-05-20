@@ -471,13 +471,26 @@ export default function App() {
          return;
      }
 
-     const totalDose = precision(w * (preset.dosePerKg || 0));
+     let totalDose = precision(w * (preset.dosePerKg || 0));
+     let isMaxDoseLimited = false;
+     let maxDoseStr = '';
+     
+     if (preset.maxDoseMg && totalDose > preset.maxDoseMg) {
+        totalDose = preset.maxDoseMg;
+        isMaxDoseLimited = true;
+        maxDoseStr = `Liều tối đa ${preset.maxDoseMg}mg/lần`;
+     }
+
      const cMg = preset.concentrationMg || 1;
      const cMl = preset.concentrationMl || 1;
      const volumeNum = precision((totalDose * cMl) / cMg);
      const volume = formatResult(volumeNum);
      
-     const step1Str = `• ${w} kg × ${preset.dosePerKg} mg = ${formatResult(totalDose)} mg`;
+     let step1Str = `• ${w} kg × ${preset.dosePerKg} mg = ${formatResult(precision(w * (preset.dosePerKg || 0)))} mg`;
+     if (isMaxDoseLimited) {
+         step1Str += ` → Giới hạn ${preset.maxDoseMg} mg`;
+     }
+     
      const divStr = (!preset.isSolid && cMl !== 1) ? ` × ${cMl}` : '';
      const step2Str = `• ${formatResult(totalDose)} mg : ${cMg}${divStr} = ${volume} ${preset.unit}`;
      
@@ -509,7 +522,9 @@ export default function App() {
         totalVolume: totalVolumeStr,
         volumeNum: volumeNum,
         timesPerDay: preset.timesPerDay,
-        unit: preset.unit
+        unit: preset.unit,
+        isMaxDoseLimited,
+        maxDoseStr
      });
      
      setExpr(String(volume));
@@ -671,6 +686,12 @@ export default function App() {
                      </div>
                      <div className="text-slate-900 font-bold text-[17px] leading-tight pt-1">
                         {item.result}
+                        {item.isMaxDoseLimited && (
+                           <span className="inline-flex items-center gap-1 ml-2 text-[12px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 align-text-bottom">
+                             <span className="text-[14px] leading-none -mt-[1px]">⚠️</span>
+                             {item.maxDoseStr}
+                           </span>
+                        )}
                         {item.volumeNum !== undefined && getFractionText(String(item.volumeNum)) && !item.result.includes('/') && (
                            <span className="text-slate-500 ml-1 text-sm">{getFractionText(String(item.volumeNum))}</span>
                         )}

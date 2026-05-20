@@ -22,6 +22,7 @@ export function PresetModal({
   const [unit, setUnit] = useState('mL');
   const [isSolid, setIsSolid] = useState(false);
   const [color, setColor] = useState('');
+  const [maxDoseMg, setMaxDoseMg] = useState('');
 
   const PRESET_COLORS = [
     { value: '', label: 'Mặc định (Trắng)', bg: 'bg-white', border: 'border-slate-200' },
@@ -43,6 +44,7 @@ export function PresetModal({
       setUnit(initialData.unit || 'mL');
       setIsSolid(initialData.isSolid || false);
       setColor(initialData.color || '');
+      setMaxDoseMg(initialData.maxDoseMg?.toString() || '');
     } else {
       setName('');
       setDosePerKg('15');
@@ -52,6 +54,7 @@ export function PresetModal({
       setUnit('mL');
       setIsSolid(false);
       setColor('');
+      setMaxDoseMg('');
     }
   }, [initialData, isOpen]);
 
@@ -66,10 +69,15 @@ export function PresetModal({
     const cMg = parseFloat(concentrationMg);
     const cMl = isSolid ? 1 : parseFloat(concentrationMl);
     const tPd = parseFloat(timesPerDay) || 1;
+    const maxD = maxDoseMg.trim() === '' ? undefined : parseFloat(maxDoseMg);
     
     if (isNaN(dPkg) || isNaN(cMg) || isNaN(cMl) || cMg === 0) {
       alert("Hệ số tính toán không hợp lệ");
       return;
+    }
+    if (maxDoseMg.trim() !== '' && (isNaN(maxD as number) || (maxD as number) <= 0)) {
+       alert("Liều tối đa không hợp lệ");
+       return;
     }
     
     onSave({
@@ -81,7 +89,8 @@ export function PresetModal({
       timesPerDay: tPd,
       unit: unit.trim() || (isSolid ? 'gói' : 'mL'),
       isSolid,
-      color
+      color,
+      maxDoseMg: maxD
     });
   };
 
@@ -129,6 +138,18 @@ export function PresetModal({
                    onChange={e => setTimesPerDay(e.target.value)} 
                    className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-mono font-bold text-slate-700 placeholder:text-slate-300" 
                    placeholder="VD: 2, 3..."
+                 />
+             </div>
+             
+             <div>
+                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Liều tối đa/lần (mg) <span className="text-slate-400 font-normal normal-case">(Tùy chọn)</span></label>
+                 <input 
+                   type="number" 
+                   inputMode="decimal" 
+                   value={maxDoseMg} 
+                   onChange={e => setMaxDoseMg(e.target.value)} 
+                   className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-mono font-bold text-slate-700 placeholder:text-slate-300" 
+                   placeholder="VD: 500, 1000..."
                  />
              </div>
              
