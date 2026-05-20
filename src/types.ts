@@ -7,6 +7,8 @@ export interface Preset {
   timesPerDay?: number;
   unit?: string;
   isSpecial?: boolean;
+  isSolid?: boolean;
+  color?: string;
 }
 
 export interface HistoryItem {

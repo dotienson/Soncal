@@ -20,6 +20,18 @@ export function PresetModal({
   const [concentrationMl, setConcentrationMl] = useState('5');
   const [timesPerDay, setTimesPerDay] = useState('3');
   const [unit, setUnit] = useState('mL');
+  const [isSolid, setIsSolid] = useState(false);
+  const [color, setColor] = useState('');
+
+  const PRESET_COLORS = [
+    { value: '', label: 'Mặc định (Trắng)', bg: 'bg-white', border: 'border-slate-200' },
+    { value: 'red', label: 'Đỏ', bg: 'bg-red-100', border: 'border-red-200' },
+    { value: 'amber', label: 'Cam', bg: 'bg-amber-100', border: 'border-amber-200' },
+    { value: 'emerald', label: 'Xanh lá', bg: 'bg-emerald-100', border: 'border-emerald-200' },
+    { value: 'sky', label: 'Xanh biển', bg: 'bg-sky-100', border: 'border-sky-200' },
+    { value: 'purple', label: 'Tím', bg: 'bg-purple-100', border: 'border-purple-200' },
+    { value: 'pink', label: 'Hồng', bg: 'bg-pink-100', border: 'border-pink-200' },
+  ];
 
   useEffect(() => {
     if (initialData) {
@@ -29,6 +41,8 @@ export function PresetModal({
       setConcentrationMl(initialData.concentrationMl?.toString() || '5');
       setTimesPerDay(initialData.timesPerDay?.toString() || '3');
       setUnit(initialData.unit || 'mL');
+      setIsSolid(initialData.isSolid || false);
+      setColor(initialData.color || '');
     } else {
       setName('');
       setDosePerKg('15');
@@ -36,6 +50,8 @@ export function PresetModal({
       setConcentrationMl('5');
       setTimesPerDay('3');
       setUnit('mL');
+      setIsSolid(false);
+      setColor('');
     }
   }, [initialData, isOpen]);
 
@@ -48,7 +64,7 @@ export function PresetModal({
     }
     const dPkg = parseFloat(dosePerKg);
     const cMg = parseFloat(concentrationMg);
-    const cMl = parseFloat(concentrationMl);
+    const cMl = isSolid ? 1 : parseFloat(concentrationMl);
     const tPd = parseFloat(timesPerDay) || 1;
     
     if (isNaN(dPkg) || isNaN(cMg) || isNaN(cMl) || cMg === 0) {
@@ -63,11 +79,13 @@ export function PresetModal({
       concentrationMg: cMg,
       concentrationMl: cMl,
       timesPerDay: tPd,
-      unit: unit.trim() || 'mL'
+      unit: unit.trim() || (isSolid ? 'gói' : 'mL'),
+      isSolid,
+      color
     });
   };
 
-  const previewVal = (10 * (parseFloat(dosePerKg)||0) * (parseFloat(concentrationMl)||1)) / ((parseFloat(concentrationMg)||1) || 1);
+  const previewVal = (10 * (parseFloat(dosePerKg)||0) * (isSolid ? 1 : parseFloat(concentrationMl)||1)) / ((parseFloat(concentrationMg)||1) || 1);
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -115,31 +133,50 @@ export function PresetModal({
              </div>
              
              <div className="pt-2 border-t border-slate-200">
-                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hàm lượng thuốc / Siro</label>
+                 <div className="flex justify-between items-center mb-2">
+                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">Hàm lượng thuốc</label>
+                   <div className="flex bg-slate-200/50 p-1 rounded-lg gap-1">
+                     <button
+                       onClick={() => { setIsSolid(false); setUnit('mL'); }}
+                       className={`px-3 py-1 rounded-md text-[11px] font-bold transition-colors ${!isSolid ? 'bg-white shadow text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
+                     >Siro</button>
+                     <button
+                       onClick={() => { setIsSolid(true); setUnit('gói'); }}
+                       className={`px-3 py-1 rounded-md text-[11px] font-bold transition-colors ${isSolid ? 'bg-white shadow text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}
+                     >Gói/Viên</button>
+                   </div>
+                 </div>
                  <div className="flex items-center gap-2">
                      <input 
                        type="number" 
                        inputMode="decimal" 
                        value={concentrationMg} 
                        onChange={e => setConcentrationMg(e.target.value)} 
-                       className="w-20 border border-slate-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-center font-bold text-emerald-700" 
+                       className={`w-20 border border-slate-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-center font-bold ${isSolid ? 'text-emerald-700' : 'text-blue-700'}`} 
                      />
                      <span className="text-slate-500 font-bold text-sm">mg :</span>
-                     <input 
-                       type="number" 
-                       inputMode="decimal" 
-                       value={concentrationMl} 
-                       onChange={e => setConcentrationMl(e.target.value)} 
-                       className="w-16 border border-slate-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-center font-bold text-emerald-700" 
-                     />
+                     {!isSolid && (
+                       <input 
+                         type="number" 
+                         inputMode="decimal" 
+                         value={concentrationMl} 
+                         onChange={e => setConcentrationMl(e.target.value)} 
+                         className="w-16 border border-slate-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-center font-bold text-blue-700" 
+                       />
+                     )}
+                     {isSolid && (
+                        <div className="w-16 text-center font-mono font-bold text-slate-400">1</div>
+                     )}
                      <input 
                        value={unit}
                        onChange={e => setUnit(e.target.value)}
                        className="w-16 bg-transparent border-b-2 border-slate-300 focus:border-blue-500 outline-none text-center font-bold text-slate-700 text-sm py-1"
-                       placeholder="mL/gói"
+                       placeholder={isSolid ? "gói" : "mL"}
                      />
                  </div>
-                 <p className="text-xs text-slate-400 mt-2">Ví dụ: Augmentin 600mg / 5mL</p>
+                 <p className="text-xs text-slate-400 mt-2">
+                    {isSolid ? "Ví dụ: 250mg : 1 gói" : "Ví dụ: Augmentin 600mg / 5mL"}
+                 </p>
              </div>
           </div>
 
@@ -147,8 +184,22 @@ export function PresetModal({
              <div className="font-bold text-xs uppercase text-blue-600 mb-1 tracking-wider">Preview Nhanh (Bé 10kg)</div>
              <div className="font-mono bg-white p-2.5 rounded-lg border border-blue-100 font-medium leading-relaxed text-[13px]">
                • 10kg × {Number(dosePerKg)||0} mg = <strong>{10 * (Number(dosePerKg)||0)} mg</strong><br/>
-               • {10 * (Number(dosePerKg)||0)} mg : {Number(concentrationMg)||1} {Number(concentrationMl) !== 1 ? `× ${Number(concentrationMl)}` : ''} = <span className="font-black text-emerald-600 text-[15px]">{Number(previewVal.toPrecision(4))}</span> {unit}
+               • {10 * (Number(dosePerKg)||0)} mg : {Number(concentrationMg)||1} {!isSolid && Number(concentrationMl) !== 1 ? `× ${Number(concentrationMl)}` : ''} = <span className="font-black text-emerald-600 text-[15px]">{Number(previewVal.toPrecision(4))}</span> {unit || (isSolid ? 'gói' : 'mL')}
                {Number(timesPerDay) > 0 && <div className="text-xs text-slate-500 mt-1 pt-1 border-t border-slate-100">Dùng {Number(timesPerDay)} lần/ngày</div>}
+             </div>
+          </div>
+
+          <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Màu sắc nút</label>
+             <div className="flex flex-wrap gap-2">
+                {PRESET_COLORS.map(c => (
+                   <button
+                     key={c.value}
+                     onClick={() => setColor(c.value)}
+                     className={`w-8 h-8 rounded-full border-2 ${c.bg} ${c.border} flex items-center justify-center transition-transform active:scale-95 ${color === c.value ? 'scale-110 ring-2 ring-blue-500 ring-offset-1' : ''}`}
+                     title={c.label}
+                   />
+                ))}
              </div>
           </div>
         </div>

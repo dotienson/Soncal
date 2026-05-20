@@ -50,6 +50,74 @@ const Btn = ({ onClick, className = "", children }: any) => (
   </button>
 );
 
+function gcd(a: number, b: number): number {
+  return b ? gcd(b, a % b) : a;
+}
+
+function getFractionText(numStr: string): string | null {
+  const num = parseFloat(numStr);
+  if (isNaN(num) || !isFinite(num)) return null;
+  if (Math.abs(Math.round(num) - num) < 0.01) return null; // effectively integer
+
+  const isNegative = num < 0;
+  const absNum = Math.abs(num);
+  let intPart = Math.floor(absNum);
+  const decimal = absNum - intPart;
+
+  if (decimal < 0.01 || decimal > 0.99) return null; // Too close to integer
+
+  let bestNum = 1;
+  let bestDen = 2;
+  let minDiff = 1;
+
+  for (let d = 2; d <= 10; d++) {
+    for (let n = 1; n < d; n++) {
+      const diff = Math.abs(decimal - (n / d));
+      if (diff < minDiff - 0.00001) {
+        minDiff = diff;
+        let g = gcd(n, d);
+        bestNum = n / g;
+        bestDen = d / g;
+      }
+    }
+  }
+
+  // We should format fraction decimal cleanly
+  const fractionVal = intPart + (bestNum / bestDen);
+  const fractionValStr = Number.isInteger(fractionVal) ? fractionVal.toString() : +(fractionVal.toFixed(3));
+  
+  const sign = isNegative ? "-" : "";
+  const prefix = intPart === 0 ? "" : `${intPart} + `;
+  return `${sign}~ ${prefix}${bestNum}/${bestDen} (${sign}${fractionValStr})`;
+}
+
+const BottomTicker = () => {
+  const [index, setIndex] = useState(0);
+  const messages = [
+    "Luôn kiểm tra lại cân nặng với mẹ bé!",
+    "Luôn hỏi về dị ứng thuốc, sàng lọc, tiền sử!",
+    "Phần mềm của BS. Đỗ Tiến Sơn - Version 2.2"
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex(prev => (prev + 1) % messages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="w-full text-center mt-1 mb-0 flex-shrink-0 px-2 overflow-hidden h-[16px]">
+      <div 
+        key={index} 
+        className="text-[10px] font-black tracking-widest text-amber-500 uppercase animate-pulse animate-in slide-in-from-bottom-2 fade-in duration-500"
+      >
+        {messages[index]}
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [weightStr, setWeightStr] = useState<string>(() => localStorage.getItem('medCalc_weight') || '');
   const [daysStr, setDaysStr] = useState<string>(() => {
@@ -77,7 +145,7 @@ export default function App() {
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
         setShowIdleOverlay(true);
-      }, 50000);
+      }, 180000);
     };
 
     window.addEventListener('touchstart', resetIdleTimer);
@@ -394,14 +462,21 @@ export default function App() {
      const volume = formatResult(volumeNum);
      
      const step1Str = `• ${w} kg × ${preset.dosePerKg} mg = ${formatResult(totalDose)} mg`;
-     const divStr = cMl !== 1 ? ` × ${cMl}` : '';
+     const divStr = (!preset.isSolid && cMl !== 1) ? ` × ${cMl}` : '';
      const step2Str = `• ${formatResult(totalDose)} mg : ${cMg}${divStr} = ${volume} ${preset.unit}`;
      
-     let resultStr = `${volume} ${preset.unit}`;
+     let fractionPart: string | number = volume;
+     const fracText = getFractionText(String(volumeNum));
+     if (fracText) fractionPart = fracText.split(' (')[0].replace('~ ', '');
+
+     let resultStr = preset.isSolid 
+        ? `${formatResult(totalDose)} mg (${fractionPart} ${preset.unit})`
+        : `${volume} ${preset.unit}`;
+        
      let totalVolumeStr = '';
      const dStr = parseFloat(daysStr);
      
-     if (preset.timesPerDay > 0) {
+     if (preset.timesPerDay && preset.timesPerDay > 0) {
         resultStr += ` (${preset.timesPerDay} lần/ngày)`;
         if (!isNaN(dStr) && dStr > 0) {
             const totalVol = precision(volumeNum * preset.timesPerDay * dStr);
@@ -566,7 +641,12 @@ export default function App() {
                      <div className="text-slate-500 font-mono text-[12px] border-b border-slate-50 pb-1">
                         {Array.isArray(item.expression) ? item.expression.map((line, i) => <div key={i}>{line}</div>) : item.expression}
                      </div>
-                     <div className="text-slate-900 font-bold text-[17px] leading-tight pt-1">{item.result}</div>
+                     <div className="text-slate-900 font-bold text-[17px] leading-tight pt-1">
+                        {item.result}
+                        {item.volumeNum !== undefined && getFractionText(String(item.volumeNum)) && !item.result.includes('/') && (
+                           <span className="text-slate-500 ml-1 text-sm">{getFractionText(String(item.volumeNum))}</span>
+                        )}
+                     </div>
                      {(() => {
                         let displayTotal = item.totalVolume;
                         const dStr = parseFloat(daysStr);
@@ -584,7 +664,12 @@ export default function App() {
                 ) : (
                   <div key={item.id} className="bg-white p-2.5 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] text-right flex flex-col gap-0.5 border border-slate-100 animate-in slide-in-from-bottom-2 fade-in duration-200">
                      <div className="text-slate-400 text-[12px] font-mono border-b border-slate-50 pb-1">{Array.isArray(item.expression) ? item.expression.join(' ') : item.expression}</div>
-                     <div className="text-slate-800 font-bold text-lg font-mono pt-1 leading-tight">{item.result}</div>
+                     <div className="flex flex-col items-end">
+                       <span className="text-slate-800 font-bold text-lg font-mono pt-1 leading-tight">{item.result}</span>
+                       {getFractionText(item.result) && (
+                          <span className="text-slate-500 font-bold text-sm -mt-0.5 pointer-events-none">{getFractionText(item.result)}</span>
+                       )}
+                     </div>
                   </div>
                 )
              ))}
@@ -602,6 +687,11 @@ export default function App() {
                    >
                       {renderColoredExpression(expr)}
                    </div>
+                   {isResult && getFractionText(expr) && (
+                      <div className="text-slate-500 font-bold text-[15px] pb-1 text-right mt-0.5">
+                         {getFractionText(expr)}
+                      </div>
+                   )}
                </div>
             </div>
 
@@ -611,8 +701,23 @@ export default function App() {
               <div className={`border-y border-slate-100 bg-slate-50 flex overflow-x-auto hide-scrollbar gap-2 px-4 py-2.5`} style={{ WebkitOverflowScrolling: 'touch' }}>
                  {presets.map(p => {
                     const isTamiflu = p.id === 'tamiflu';
-                    const btnBg = isTamiflu ? 'bg-amber-100 border-amber-200 text-amber-800' : 'bg-white border-slate-200 text-slate-700';
-                    const iconColor = isTamiflu ? 'text-amber-400 active:text-amber-600 border-amber-200' : 'text-slate-300 active:text-blue-500 border-slate-200';
+                    let btnBg = 'bg-white border-slate-200 text-slate-700';
+                    let iconColor = 'text-slate-300 active:text-blue-500 border-slate-200';
+                    
+                    if (isTamiflu) {
+                       btnBg = 'bg-amber-100 border-amber-200 text-amber-800';
+                       iconColor = 'text-amber-400 active:text-amber-600 border-amber-200';
+                    } else if (p.color) {
+                       switch(p.color) {
+                          case 'red': btnBg = 'bg-red-50 border-red-200 text-red-700'; iconColor = 'text-red-300 active:text-red-500 border-red-200'; break;
+                          case 'amber': btnBg = 'bg-amber-50 border-amber-200 text-amber-700'; iconColor = 'text-amber-300 active:text-amber-500 border-amber-200'; break;
+                          case 'emerald': btnBg = 'bg-emerald-50 border-emerald-200 text-emerald-700'; iconColor = 'text-emerald-300 active:text-emerald-500 border-emerald-200'; break;
+                          case 'sky': btnBg = 'bg-sky-50 border-sky-200 text-sky-700'; iconColor = 'text-sky-300 active:text-sky-500 border-sky-200'; break;
+                          case 'purple': btnBg = 'bg-purple-50 border-purple-200 text-purple-700'; iconColor = 'text-purple-300 active:text-purple-500 border-purple-200'; break;
+                          case 'pink': btnBg = 'bg-pink-50 border-pink-200 text-pink-700'; iconColor = 'text-pink-300 active:text-pink-500 border-pink-200'; break;
+                       }
+                    }
+                    
                     return (
                     <button 
                        key={p.id} 
@@ -649,22 +754,22 @@ export default function App() {
                 <div className={`grid grid-cols-4 transition-all duration-300 gap-2.5`}>
                   <Btn onClick={() => clearAll(false)} className={`bg-red-50 text-red-600 font-black hover:bg-red-100 text-2xl col-span-2`}>AC</Btn>
                   <Btn onClick={handleBackspace} className={`${t.btnAction} font-bold`}><Delete className={"w-7 h-7"} /></Btn>
-                  <Btn onClick={() => performOperation('+')} className={`${t.btnOp} font-light pb-1 text-4xl`}>+</Btn>
+                  <Btn onClick={() => performOperation('×')} className={`bg-yellow-400 text-yellow-900 hover:bg-yellow-500 shadow-md font-bold pt-1 border border-yellow-500 text-5xl`}>×</Btn>
                   
                   <Btn onClick={() => inputDigit('7')} className={`${t.btnNum} `}>7</Btn>
                   <Btn onClick={() => inputDigit('8')} className={`${t.btnNum} `}>8</Btn>
                   <Btn onClick={() => inputDigit('9')} className={`${t.btnNum} `}>9</Btn>
-                  <Btn onClick={() => performOperation('-')} className={`${t.btnOp} font-light pb-1 text-4xl`}>−</Btn>
+                  <Btn onClick={() => performOperation(':')} className={`${t.btnOp} font-light pb-1 text-4xl`}>:</Btn>
                   
                   <Btn onClick={() => inputDigit('4')} className={`${t.btnNum} `}>4</Btn>
                   <Btn onClick={() => inputDigit('5')} className={`${t.btnNum} `}>5</Btn>
                   <Btn onClick={() => inputDigit('6')} className={`${t.btnNum} `}>6</Btn>
-                  <Btn onClick={() => performOperation('×')} className={`bg-yellow-400 text-yellow-900 hover:bg-yellow-500 shadow-md font-bold pt-1 border border-yellow-500 text-5xl`}>×</Btn>
+                  <Btn onClick={() => performOperation('+')} className={`${t.btnOp} font-light pb-1 text-4xl`}>+</Btn>
                   
                   <Btn onClick={() => inputDigit('1')} className={`${t.btnNum} `}>1</Btn>
                   <Btn onClick={() => inputDigit('2')} className={`${t.btnNum} `}>2</Btn>
                   <Btn onClick={() => inputDigit('3')} className={`${t.btnNum} `}>3</Btn>
-                  <Btn onClick={() => performOperation(':')} className={`${t.btnOp} font-light pb-1 text-4xl`}>:</Btn>
+                  <Btn onClick={() => performOperation('-')} className={`${t.btnOp} font-light pb-1 text-4xl`}>−</Btn>
                   
                   <Btn onClick={() => inputDigit('0')} className={`${t.btnNum} `}>0</Btn>
                   <Btn onClick={inputDot} className={`${t.btnNum} pb-3 text-4xl`}>.</Btn>
@@ -701,6 +806,7 @@ export default function App() {
            setModalOpen(false);
         }}
       />
+      <BottomTicker />
     </div>
   );
 }
