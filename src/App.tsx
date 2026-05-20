@@ -793,9 +793,8 @@ export default function App() {
                   
                   <Btn onClick={() => inputDigit('0')} className={`${t.btnNum} `}>0</Btn>
                   <Btn onClick={inputDot} className={`${t.btnNum} pb-3 text-4xl`}>.</Btn>
-                  <Btn onClick={handleEqual} className={`${t.btnEq} font-black rounded-2xl col-span-2 shadow-md text-4xl flex items-center justify-center gap-1`}>
+                  <Btn onClick={handleEqual} className={`${isPremium ? 'bg-gradient-to-b from-amber-400 to-amber-500 text-amber-950 shadow-[0_4px_15px_rgba(245,158,11,0.5)] border-2 border-amber-300 animate-pulse' : t.btnEq} font-black rounded-2xl col-span-2 shadow-md text-4xl flex items-center justify-center`}>
                     =
-                    {isPremium && <Crown className="w-5 h-5 text-amber-500/80 mt-1" strokeWidth={2.5} />}
                   </Btn>
                 </div>
               </div>
@@ -820,15 +819,25 @@ export default function App() {
             <p className="text-slate-500 text-sm text-center mb-6 font-medium leading-relaxed">
               Bạn cần nhập mã kích hoạt để thêm <strong className="text-slate-800">thuốc mới</strong> không giới hạn!
             </p>
-            <input 
-              value={premiumCode}
-              onChange={e => {
-                 setPremiumCode(e.target.value);
-                 setPremiumError(false);
-              }}
-              className={`w-full text-center tracking-widest font-mono text-xl border rounded-xl px-4 py-3 outline-none transition-colors ${premiumError ? 'border-red-500 bg-red-50 text-red-600' : 'border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-slate-800'}`}
-              placeholder="XXX-XXX"
-            />
+            <div className="relative w-full">
+              <input 
+                type="tel"
+                value={premiumCode}
+                onChange={e => {
+                   const v = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+                   setPremiumCode(v);
+                   setPremiumError(false);
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 text-transparent cursor-text z-10"
+              />
+              <div className={`w-full text-center font-mono text-[22px] border rounded-xl px-4 py-3 transition-colors ${premiumError ? 'border-red-500 bg-red-50 text-red-600' : (premiumCode.length > 0 ? 'border-amber-500 ring-2 ring-amber-500/20 text-slate-800' : 'border-slate-300 bg-slate-50')}`}>
+                <div className="flex justify-center items-center tracking-[0.2em] font-black h-7">
+                   {premiumCode.length === 0 ? <span className="text-slate-300 tracking-widest font-normal text-xl">XXX-XXX</span> : 
+                    (premiumCode.slice(0,3).replace(/./g, '•') + (premiumCode.length > 3 ? '-' + premiumCode.slice(3,6).replace(/./g, '•') : ''))
+                   }
+                </div>
+              </div>
+            </div>
             {premiumError && <div className="text-red-500 text-xs font-bold mt-2">Mã kích hoạt không đúng!</div>}
             
             <div className="flex gap-4 w-full mt-6">
