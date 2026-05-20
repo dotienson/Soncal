@@ -419,7 +419,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <div className="bg-black h-[100dvh] w-full flex items-center justify-center font-sans tracking-tight px-1.5 sm:px-4 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)] overflow-hidden">
+    <div className="bg-black h-[100dvh] w-full flex flex-col items-center justify-center font-sans tracking-tight px-1.5 sm:px-4 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),8px)] overflow-hidden">
       <div className={`${t.app} w-full h-full flex-1 max-h-full sm:max-h-[840px] max-w-md rounded-[2.5rem] shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border border-[#2a2a2a]`}>
         
         {weightWarning && (
@@ -663,6 +663,10 @@ export default function App() {
               </div>
             </div>
         </div>
+      </div>
+
+      <div className="mt-1 sm:mt-2 text-center text-[10.5px] font-mono text-emerald-400 tracking-widest uppercase w-full flex-shrink-0 z-0 animate-pulse drop-shadow-[0_0_4px_rgba(52,211,153,0.6)]">
+        Calculator 2.1 by Dr. Do Tien Son
       </div>
 
       <SettingsModal 
