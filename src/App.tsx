@@ -52,7 +52,10 @@ const Btn = ({ onClick, className = "", children }: any) => (
 
 export default function App() {
   const [weightStr, setWeightStr] = useState<string>(() => localStorage.getItem('medCalc_weight') || '');
-  const [daysStr, setDaysStr] = useState<string>(() => localStorage.getItem('medCalc_days') || '');
+  const [daysStr, setDaysStr] = useState<string>(() => {
+    const val = localStorage.getItem('medCalc_days');
+    return val && ['3', '5', '7'].includes(val) ? val : '7';
+  });
 
   useEffect(() => {
     localStorage.setItem('medCalc_weight', weightStr);
@@ -282,7 +285,7 @@ export default function App() {
     setExpr('0');
     setIsResult(false);
     setWeightStr('');
-    setDaysStr('');
+    setDaysStr('7');
     if (clearHist === true) {
        setHistory([]);
     }
@@ -368,7 +371,10 @@ export default function App() {
         title: `Tamiflu (Cân: ${w} kg)`,
         expression: [`• Cách 1 viên (75mg) pha 15 mL nước`, `• Lấy liều: ${note}`],
         result: resultStr,
-        totalVolume: totalVolumeStr
+        totalVolume: totalVolumeStr,
+        volumeNum: volume,
+        timesPerDay: 2,
+        unit: 'mL'
      });
      
      setExpr(formatResult(volume));
@@ -409,7 +415,10 @@ export default function App() {
         title: `${preset.name} (Cân: ${w} kg)`,
         expression: [step1Str, step2Str],
         result: resultStr,
-        totalVolume: totalVolumeStr
+        totalVolume: totalVolumeStr,
+        volumeNum: volumeNum,
+        timesPerDay: preset.timesPerDay,
+        unit: preset.unit
      });
      
      setExpr(String(volume));
@@ -511,32 +520,29 @@ export default function App() {
 
         {/* Info Box Overlay */}
         <div className="absolute top-0 inset-x-0 z-30 flex justify-center pointer-events-none">
-           <div className="bg-[#fefce8]/95 backdrop-blur-md border-b border-x border-[#fde047] rounded-b-[1.5rem] shadow-[0_2px_10px_rgba(250,204,21,0.2)] pointer-events-auto px-4 py-1.5 flex items-center justify-center gap-1 w-fit animate-[pulse_3s_ease-in-out_infinite]">
-              <span className="text-amber-800 font-medium text-[12px] sm:text-[13px] whitespace-nowrap">Đang tính liều cho trẻ</span>
+           <div className="bg-[#ffcb05] border-b border-x border-[#eab308] rounded-b-[1.5rem] shadow-sm pointer-events-auto px-4 py-1.5 flex items-center justify-center gap-1 w-fit">
+              <span className="text-amber-900 font-bold text-[12px] sm:text-[13px] whitespace-nowrap">Đang tính liều cho trẻ</span>
               <input
                  id="weight-input"
                  type="number"
                  inputMode="decimal"
                  value={weightStr}
                  onChange={(e) => setWeightStr(e.target.value)}
-                 className="w-7 sm:w-8 bg-transparent text-red-600 text-center font-bold text-[14px] outline-none placeholder:text-red-300 p-0 m-0 leading-none"
+                 className="w-7 sm:w-8 bg-transparent text-[#b91c1c] text-center font-black text-[14px] outline-none placeholder:text-red-800/40 p-0 m-0 leading-none"
                  placeholder="--"
               />
-              <span className="text-amber-800 font-medium text-[12px] sm:text-[13px] whitespace-nowrap">kg trong</span>
+              <span className="text-amber-900 font-bold text-[12px] sm:text-[13px] whitespace-nowrap">kg trong</span>
               <select
                  id="days-input"
                  value={daysStr}
                  onChange={(e) => setDaysStr(e.target.value)}
-                 className="bg-transparent text-red-600 font-bold text-[14px] outline-none cursor-pointer appearance-none text-center px-0.5 z-10 m-0 leading-none"
+                 className="bg-transparent text-[#b91c1c] font-black text-[14px] outline-none cursor-pointer appearance-none text-center px-0.5 z-10 m-0 leading-none"
               >
-                 <option value="">-</option>
                  <option value="3">3</option>
-                 <option value="4">4</option>
                  <option value="5">5</option>
-                 <option value="6">6</option>
                  <option value="7">7</option>
               </select>
-              <span className="text-amber-800 font-medium text-[12px] sm:text-[13px] whitespace-nowrap">ngày</span>
+              <span className="text-amber-900 font-bold text-[12px] sm:text-[13px] whitespace-nowrap">ngày</span>
            </div>
         </div>
 
@@ -561,11 +567,19 @@ export default function App() {
                         {Array.isArray(item.expression) ? item.expression.map((line, i) => <div key={i}>{line}</div>) : item.expression}
                      </div>
                      <div className="text-slate-900 font-bold text-[17px] leading-tight pt-1">{item.result}</div>
-                     {item.totalVolume && (
-                        <div className="text-emerald-600 font-bold text-[13px] pt-0.5 bg-emerald-50/50 mt-1 p-1 rounded-md">
-                           {item.totalVolume}
-                        </div>
-                     )}
+                     {(() => {
+                        let displayTotal = item.totalVolume;
+                        const dStr = parseFloat(daysStr);
+                        if (item.volumeNum && item.timesPerDay && !isNaN(dStr) && dStr > 0) {
+                           const newTotalVol = precision(item.volumeNum * item.timesPerDay * dStr);
+                           displayTotal = `Tổng ${dStr} ngày: ${formatResult(newTotalVol)} ${item.unit || ''}`;
+                        }
+                        return displayTotal ? (
+                           <div className="text-emerald-600 font-bold text-[13px] pt-0.5 bg-emerald-50/50 mt-1 p-1 rounded-md">
+                              {displayTotal}
+                           </div>
+                        ) : null;
+                     })()}
                   </div>
                 ) : (
                   <div key={item.id} className="bg-white p-2.5 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] text-right flex flex-col gap-0.5 border border-slate-100 animate-in slide-in-from-bottom-2 fade-in duration-200">

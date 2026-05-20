@@ -16,4 +16,7 @@ export interface HistoryItem {
   expression: string | string[];
   result: string;
   totalVolume?: string;
+  volumeNum?: number;
+  timesPerDay?: number;
+  unit?: string;
 }
