@@ -509,40 +509,34 @@ export default function App() {
           </div>
         )}
 
-        {/* Flag Ribbons Overlay */}
-        <div className="absolute top-0 right-6 z-30 flex justify-end gap-2 drop-shadow-md pointer-events-none">
-           <div className="bg-amber-100/95 backdrop-blur-md border border-t-0 border-amber-300 rounded-b-xl px-2 pb-1.5 pt-1 flex flex-col items-center pointer-events-auto shadow-sm">
-              <div className="flex items-center">
-                 <input
-                    id="weight-input"
-                    type="number"
-                    inputMode="decimal"
-                    value={weightStr}
-                    onChange={(e) => setWeightStr(e.target.value)}
-                    className="w-10 bg-transparent text-amber-900 text-center font-black text-base outline-none placeholder:text-amber-900/40"
-                    placeholder="--"
-                 />
-                 <span className="text-amber-800 font-bold text-[11px] select-none -ml-1 pr-1">kg</span>
-              </div>
-           </div>
-
-           <div className="bg-slate-200/95 backdrop-blur-md border border-t-0 border-slate-300 rounded-b-xl px-2 pb-1.5 pt-1 flex flex-col items-center pointer-events-auto shadow-sm">
-              <div className="flex items-center h-full relative">
-                 <select
-                    id="days-input"
-                    value={daysStr}
-                    onChange={(e) => setDaysStr(e.target.value)}
-                    className="bg-transparent text-slate-800 font-black text-base outline-none cursor-pointer appearance-none text-center pl-2 pr-1 z-10"
-                 >
-                    <option value="">-</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                 </select>
-                 <span className="text-slate-600 font-bold text-[11px] pointer-events-none select-none pr-1">ngày</span>
-              </div>
+        {/* Info Box Overlay */}
+        <div className="absolute top-0 inset-x-0 z-30 flex justify-center pointer-events-none">
+           <div className="bg-[#fefce8]/95 backdrop-blur-md border-b border-x border-[#fde047] rounded-b-[1.5rem] shadow-[0_2px_10px_rgba(250,204,21,0.2)] pointer-events-auto px-4 py-1.5 flex items-center justify-center gap-1 w-fit animate-[pulse_3s_ease-in-out_infinite]">
+              <span className="text-amber-800 font-medium text-[12px] sm:text-[13px] whitespace-nowrap">Đang tính liều cho trẻ</span>
+              <input
+                 id="weight-input"
+                 type="number"
+                 inputMode="decimal"
+                 value={weightStr}
+                 onChange={(e) => setWeightStr(e.target.value)}
+                 className="w-7 sm:w-8 bg-transparent text-red-600 text-center font-bold text-[14px] outline-none placeholder:text-red-300 p-0 m-0 leading-none"
+                 placeholder="--"
+              />
+              <span className="text-amber-800 font-medium text-[12px] sm:text-[13px] whitespace-nowrap">kg trong</span>
+              <select
+                 id="days-input"
+                 value={daysStr}
+                 onChange={(e) => setDaysStr(e.target.value)}
+                 className="bg-transparent text-red-600 font-bold text-[14px] outline-none cursor-pointer appearance-none text-center px-0.5 z-10 m-0 leading-none"
+              >
+                 <option value="">-</option>
+                 <option value="3">3</option>
+                 <option value="4">4</option>
+                 <option value="5">5</option>
+                 <option value="6">6</option>
+                 <option value="7">7</option>
+              </select>
+              <span className="text-amber-800 font-medium text-[12px] sm:text-[13px] whitespace-nowrap">ngày</span>
            </div>
         </div>
 
