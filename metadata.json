@@ -1,0 +1,6 @@
+{
+  "name": "Máy Tính Liều Thuốc",
+  "description": "Máy tính bỏ túi tối ưu cực nhạy dành riêng cho y bác sĩ. Hỗ trợ hiển thị lịch sử và tuỳ biến gán công thức tính liều theo cân nặng.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
