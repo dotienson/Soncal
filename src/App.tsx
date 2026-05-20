@@ -65,7 +65,8 @@ export default function App() {
   const [expr, setExpr] = useState('0');
   const [isResult, setIsResult] = useState(false);
   const [showIdleOverlay, setShowIdleOverlay] = useState(false);
-  const [isOneHanded, setIsOneHanded] = useState(false);
+  const [oneHandedMode, setOneHandedMode] = useState<'off' | 'right' | 'left'>('off');
+  const isOneHanded = oneHandedMode !== 'off';
 
   useEffect(() => {
     let idleTimer: ReturnType<typeof setTimeout>;
@@ -75,7 +76,7 @@ export default function App() {
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
         setShowIdleOverlay(true);
-      }, 20000);
+      }, 50000);
     };
 
     window.addEventListener('touchstart', resetIdleTimer);
@@ -172,7 +173,13 @@ export default function App() {
   const [presets, setPresets] = useState<Preset[]>(() => {
      try {
        const saved = localStorage.getItem('medCalc_presets_v2');
-       if (saved) return JSON.parse(saved);
+       if (saved) {
+          const parsed = JSON.parse(saved);
+          if (!parsed.find((p: Preset) => p.id === 'tamiflu')) {
+             return [...parsed, { id: 'tamiflu', name: 'Tamiflu', isSpecial: true }];
+          }
+          return parsed;
+       }
      } catch(e) {}
      return DEFAULT_PRESETS;
   });
@@ -248,14 +255,39 @@ export default function App() {
   };
 
   const [lastEqualTap, setLastEqualTap] = useState(0);
+  const [lastZeroTap, setLastZeroTap] = useState(0);
 
   const handleEqualDoubleTap = () => {
      const now = Date.now();
      if (now - lastEqualTap < 300) {
-        setIsOneHanded(!isOneHanded);
+        setOneHandedMode(prev => prev === 'off' ? 'right' : 'off');
+        setHistory(prev => {
+           const lastItem = prev[0];
+           if (lastItem && lastItem.type === 'math' && Date.now() - parseInt(lastItem.id) < 300) {
+              return prev.slice(1);
+           }
+           return prev;
+        });
+        setLastEqualTap(0);
+     } else {
+        handleEqual();
+        setLastEqualTap(now);
      }
-     setLastEqualTap(now);
-     handleEqual();
+  };
+
+  const handleZeroDoubleTap = () => {
+     const now = Date.now();
+     if (now - lastZeroTap < 300) {
+        setOneHandedMode(prev => prev === 'off' ? 'left' : 'off');
+        setExpr(prev => {
+            if (prev.length <= 1) return '0';
+            return prev.slice(0, -1);
+        });
+        setLastZeroTap(0);
+     } else {
+        inputDigit('0');
+        setLastZeroTap(now);
+     }
   };
 
   const handleEqual = () => {
@@ -322,7 +354,7 @@ export default function App() {
         return;
      }
 
-     if (preset.id === 'tamiflu' && w < 15) {
+     if (preset.id === 'tamiflu' && w <= 15) {
         setTamifluPrompt({ w, preset });
         return;
      }
@@ -335,7 +367,7 @@ export default function App() {
      let volume = 0;
      let note = '';
      
-     if (w < 15) {
+     if (w <= 15) {
         if (isUnderOne) {
            doseMg = w * 3;
            volume = precision(doseMg / 5);
@@ -345,11 +377,11 @@ export default function App() {
            volume = 6;
            note = `Cố định 30 mg`;
         }
-     } else if (w >= 16 && w <= 23) {
+     } else if (w <= 23) {
         doseMg = 45;
         volume = 9;
         note = `Cố định 45 mg`;
-     } else if (w >= 24 && w <= 40) {
+     } else if (w <= 40) {
         doseMg = 60;
         volume = 12;
         note = `Cố định 60 mg`;
@@ -461,7 +493,7 @@ export default function App() {
             <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl border border-slate-200 flex flex-col items-center zoom-in-95">
               <h2 className="text-amber-500 text-2xl font-black mb-2 text-center">Độ tuổi của trẻ</h2>
               <p className="text-slate-600 text-center mb-6 font-medium">
-                Trẻ có cân nặng dưới 15kg.<br/>Vui lòng chọn độ tuổi tương ứng:
+                Trẻ có cân nặng ≤ 15kg.<br/>Vui lòng chọn độ tuổi tương ứng:
               </p>
               <div className="flex flex-col gap-3 w-full">
                 <button 
@@ -521,10 +553,10 @@ export default function App() {
           className="flex-1 overflow-y-auto flex flex-col custom-scrollbar scroll-smooth relative"
         >
            {/* Sticky Box Cảnh Báo Cân Nặng */}
-           <div className="sticky top-0 z-20 w-full p-3 pt-6 md:pt-4 bg-gradient-to-b from-slate-50 via-slate-50/90 to-transparent">
+           <div className="sticky top-0 z-20 w-full p-2 pt-4 md:pt-2 bg-gradient-to-b from-slate-50 via-slate-50/90 to-transparent">
              <div className="flex gap-2">
-                 <div className="bg-amber-100/90 backdrop-blur-sm border border-amber-200 shadow-sm rounded-xl p-2 px-2.5 sm:px-3 flex items-center justify-between flex-1">
-                    <label htmlFor="weight-input" className="text-amber-800 font-bold text-[13px] flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
+                 <div className="bg-amber-100/90 backdrop-blur-sm border border-amber-200 shadow-sm rounded-lg p-1.5 px-2 sm:px-2.5 flex items-center justify-between flex-1">
+                    <label htmlFor="weight-input" className="text-amber-800 font-bold text-xs flex items-center gap-1 sm:gap-1.5 whitespace-nowrap">
                        <span>⚠️</span> 
                        <span className="hidden sm:inline">Cân nặng bé:</span>
                        <span className="sm:hidden">Cân nặng:</span>
@@ -536,20 +568,20 @@ export default function App() {
                           inputMode="decimal"
                           value={weightStr}
                           onChange={(e) => setWeightStr(e.target.value)}
-                          className="w-12 sm:w-14 bg-transparent text-amber-900 text-right font-black text-lg outline-none placeholder:text-amber-900/30 py-0.5"
+                          className="w-10 sm:w-12 bg-transparent text-amber-900 text-right font-black text-base outline-none placeholder:text-amber-900/30 py-0.5"
                           placeholder="0.0"
                        />
-                       <span className="text-amber-800 font-bold ml-1 text-xs">kg</span>
+                       <span className="text-amber-800 font-bold ml-1 text-[10px]">kg</span>
                     </div>
                  </div>
 
-                 <div className="bg-slate-200/80 backdrop-blur-sm border border-slate-300 shadow-sm rounded-xl p-2 flex items-center shrink-0">
-                    <div className="flex items-center bg-white/80 rounded-md focus-within:ring-2 focus-within:ring-slate-400 transition-all border border-slate-300/50 h-full px-1.5">
+                 <div className="bg-slate-200/80 backdrop-blur-sm border border-slate-300 shadow-sm rounded-lg p-1.5 flex items-center shrink-0">
+                    <div className="flex items-center bg-white/80 rounded-md focus-within:ring-2 focus-within:ring-slate-400 transition-all border border-slate-300/50 h-full px-1.5 py-0.5">
                        <select
                           id="days-input"
                           value={daysStr}
                           onChange={(e) => setDaysStr(e.target.value)}
-                          className="bg-transparent text-slate-700 font-bold text-[13px] outline-none w-full h-full cursor-pointer appearance-none text-center"
+                          className="bg-transparent text-slate-700 font-bold text-xs outline-none w-full h-full cursor-pointer appearance-none text-center"
                        >
                           <option value="">Liệu trình</option>
                           <option value="3">3 ngày</option>
@@ -567,7 +599,7 @@ export default function App() {
              {history.length === 0 && (
                 <div className="m-auto text-center text-slate-400 p-6">
                    <CalcIcon className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                   <p className="text-[14px] font-bold text-slate-500">Máy tính liều thuốc</p>
+                   <p className="text-[14px] font-bold text-slate-500">Son Calculator 2.0</p>
                    <p className="text-xs mt-1 max-w-[250px] mx-auto leading-relaxed">Máy tính này được thiết kế để phục vụ lâm sàng hàng ngày của Bác sĩ Đỗ Tiến Sơn.</p>
                 </div>
              )}
@@ -608,7 +640,7 @@ export default function App() {
             </div>
 
             {/* Controls Wrap (Shrinks for one-handed mode) */}
-            <div className={`transition-all duration-300 flex flex-col ${isOneHanded ? 'w-[85%] ml-auto' : 'w-full'}`}>
+            <div className={`transition-all duration-300 flex flex-col ${isOneHanded ? `w-[85%] ${oneHandedMode === 'right' ? 'ml-auto' : 'mr-auto'}` : 'w-full'}`}>
               {/* Presets Bar */}
               <div className={`border-y border-slate-100 bg-slate-50 flex overflow-x-auto hide-scrollbar ${isOneHanded ? 'gap-1.5 px-3 py-1.5' : 'gap-2 px-4 py-2.5'}`} style={{ WebkitOverflowScrolling: 'touch' }}>
                  {presets.map(p => {
@@ -621,12 +653,14 @@ export default function App() {
                        className={`flex-shrink-0 border font-bold shadow-sm active:scale-95 transition-all flex items-center gap-2 ${btnBg} ${isOneHanded ? 'px-2.5 py-1.5 rounded-lg text-xs' : 'px-3.5 py-2 rounded-xl text-[13px]'}`}
                     >
                        <span onClick={() => handlePresetClick(p)} className="block pr-1 py-0.5 leading-none">{p.name}</span>
-                       <div 
-                         onClick={(e) => { e.stopPropagation(); setEditingPreset(p); setModalOpen(true); }}
-                         className={`border-l py-0.5 ${iconColor} ${isOneHanded ? 'pl-1.5' : 'pl-2'}`}
-                       >
-                         <Settings2 className={isOneHanded ? 'w-3.5 h-3.5' : 'w-[16px] h-[16px]'} />
-                       </div>
+                       {!isTamiflu && (
+                         <div 
+                           onClick={(e) => { e.stopPropagation(); setEditingPreset(p); setModalOpen(true); }}
+                           className={`border-l py-0.5 ${iconColor} ${isOneHanded ? 'pl-1.5' : 'pl-2'}`}
+                         >
+                           <Settings2 className={isOneHanded ? 'w-3.5 h-3.5' : 'w-[16px] h-[16px]'} />
+                         </div>
+                       )}
                     </button>
                  )})}
                  <button 
@@ -649,24 +683,24 @@ export default function App() {
                 <div className={`grid grid-cols-4 transition-all duration-300 ${isOneHanded ? 'gap-1.5' : 'gap-2.5'}`}>
                   <Btn isSmall={isOneHanded} onClick={() => clearAll(true)} className={`bg-red-50 text-red-600 font-black hover:bg-red-100 ${isOneHanded ? 'text-xl' : 'text-2xl'} col-span-2`}>AC</Btn>
                   <Btn isSmall={isOneHanded} onClick={handleBackspace} className={`${t.btnAction} font-bold`}><Delete className={isOneHanded ? "w-5 h-5" : "w-7 h-7"} /></Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => performOperation(':')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>:</Btn>
+                  <Btn isSmall={isOneHanded} onClick={() => performOperation('+')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>+</Btn>
                   
                   <Btn isSmall={isOneHanded} onClick={() => inputDigit('7')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>7</Btn>
                   <Btn isSmall={isOneHanded} onClick={() => inputDigit('8')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>8</Btn>
                   <Btn isSmall={isOneHanded} onClick={() => inputDigit('9')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>9</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => performOperation('×')} className={`${t.btnOp} font-light pt-1 ${isOneHanded ? 'text-4xl' : 'text-5xl'}`}>×</Btn>
+                  <Btn isSmall={isOneHanded} onClick={() => performOperation('-')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>−</Btn>
                   
                   <Btn isSmall={isOneHanded} onClick={() => inputDigit('4')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>4</Btn>
                   <Btn isSmall={isOneHanded} onClick={() => inputDigit('5')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>5</Btn>
                   <Btn isSmall={isOneHanded} onClick={() => inputDigit('6')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>6</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => performOperation('-')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>−</Btn>
+                  <Btn isSmall={isOneHanded} onClick={() => performOperation('×')} className={`bg-yellow-400 text-yellow-900 hover:bg-yellow-500 shadow-md font-bold pt-1 border border-yellow-500 ${isOneHanded ? 'text-4xl' : 'text-5xl'}`}>×</Btn>
                   
                   <Btn isSmall={isOneHanded} onClick={() => inputDigit('1')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>1</Btn>
                   <Btn isSmall={isOneHanded} onClick={() => inputDigit('2')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>2</Btn>
                   <Btn isSmall={isOneHanded} onClick={() => inputDigit('3')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>3</Btn>
-                  <Btn isSmall={isOneHanded} onClick={() => performOperation('+')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>+</Btn>
+                  <Btn isSmall={isOneHanded} onClick={() => performOperation(':')} className={`${t.btnOp} font-light pb-1 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>:</Btn>
                   
-                  <Btn isSmall={isOneHanded} onClick={() => inputDigit('0')} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>0</Btn>
+                  <Btn isSmall={isOneHanded} onClick={handleZeroDoubleTap} className={`${t.btnNum} ${isOneHanded ? 'text-2xl' : ''}`}>0</Btn>
                   <Btn isSmall={isOneHanded} onClick={inputDot} className={`${t.btnNum} pb-3 ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>.</Btn>
                   <Btn isSmall={isOneHanded} onClick={handleEqualDoubleTap} className={`${t.btnEq} font-black rounded-2xl col-span-2 shadow-md ${isOneHanded ? 'text-3xl' : 'text-4xl'}`}>=</Btn>
                 </div>
