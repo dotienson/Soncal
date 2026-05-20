@@ -419,8 +419,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <div className="bg-black h-[100dvh] w-full flex flex-col items-center justify-center font-sans tracking-tight px-1.5 sm:px-4 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),8px)] overflow-hidden">
-      <div className={`${t.app} w-full h-full flex-1 max-h-full sm:max-h-[840px] max-w-md rounded-[2.5rem] shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border border-[#2a2a2a]`}>
+    <div className="bg-black h-[100dvh] w-full flex flex-col items-center justify-center font-sans tracking-tight p-0.5 sm:p-2 pt-[max(env(safe-area-inset-top),4px)] pb-[max(env(safe-area-inset-bottom),4px)] overflow-hidden">
+      <div className={`${t.app} w-full h-full flex-1 max-h-full sm:max-h-[840px] max-w-md rounded-[2.25rem] sm:rounded-[2.5rem] shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border border-[#2a2a2a]`}>
         
         {weightWarning && (
           <div className="absolute inset-0 z-[100] bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
@@ -586,12 +586,14 @@ export default function App() {
         {/* Dynamic Control Area Bottom */}
         <div className="bg-white shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] z-20 flex-shrink-0 relative">
             {/* Calculator Display */}
-            <div className="px-5 pb-2 pt-4 flex flex-col items-end">
-               <div 
-                 ref={displayRef}
-                 className={`text-[3rem] leading-tight font-black ${t.display} text-right tracking-tighter w-full overflow-x-auto hide-scrollbar whitespace-nowrap pt-1`}
-               >
-                  {renderColoredExpression(expr)}
+            <div className="px-4 pb-3 pt-3 flex flex-col items-end">
+               <div className="w-full bg-slate-50 border-t-2 border-b border-x border-slate-200/80 border-t-slate-300 rounded-3xl py-2 px-4 shadow-[inset_0_4px_10px_rgba(0,0,0,0.06),0_1px_1px_rgba(255,255,255,1)]">
+                   <div 
+                     ref={displayRef}
+                     className={`text-[3rem] leading-[1.1] font-black ${t.display} text-right tracking-tighter w-full overflow-x-auto hide-scrollbar whitespace-nowrap pt-1`}
+                   >
+                      {renderColoredExpression(expr)}
+                   </div>
                </div>
             </div>
 
@@ -665,9 +667,7 @@ export default function App() {
         </div>
       </div>
 
-      <div className="mt-1 sm:mt-2 text-center text-[10.5px] font-mono text-emerald-400 tracking-widest uppercase w-full flex-shrink-0 z-0 animate-pulse drop-shadow-[0_0_4px_rgba(52,211,153,0.6)]">
-        Calculator 2.1 by Dr. Do Tien Son
-      </div>
+
 
       <SettingsModal 
          isOpen={settingsOpen}
