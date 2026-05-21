@@ -806,6 +806,13 @@ export default function App() {
             <div className={`transition-all duration-300 flex flex-col w-full`}>
               {/* Presets Bar */}
               <div className={`border-y border-slate-100 bg-slate-50 flex overflow-x-auto hide-scrollbar gap-2 px-4 py-2.5`} style={{ WebkitOverflowScrolling: 'touch' }}>
+                 <button 
+                    className={`flex-shrink-0 bg-slate-100 text-slate-600 border border-slate-200 rounded-xl active:scale-95 transition-transform flex items-center justify-center shadow-sm p-2`}
+                    onClick={() => setSettingsOpen(true)}
+                 >
+                    <Settings2 className={'w-5 h-5'} />
+                 </button>
+                 <div className="w-[1px] h-6 bg-slate-200 flex-shrink-0 mx-1 self-center"></div>
                  {presets.map(p => {
                     const isTamiflu = p.id === 'tamiflu';
                     let btnBg = 'bg-white border-slate-200 text-slate-700';
@@ -828,15 +835,15 @@ export default function App() {
                     return (
                     <button 
                        key={p.id} 
-                       className={`flex-shrink-0 border font-bold shadow-sm active:scale-95 transition-all flex items-center gap-2 ${btnBg} px-3.5 py-2 rounded-xl text-[13px]`}
+                       className={`flex-shrink-0 border font-bold shadow-sm active:scale-95 transition-all flex items-center gap-1.5 ${btnBg} px-3 py-2 rounded-xl text-[13px]`}
                     >
                        <span onClick={() => handlePresetClick(p)} className="block pr-1 py-0.5 leading-none">{p.name}</span>
                        {!isTamiflu && (
                          <div 
                            onClick={(e) => { e.stopPropagation(); setEditingPreset(p); setModalOpen(true); }}
-                           className={`border-l py-0.5 ${iconColor} pl-2`}
+                           className={`border-l py-0.5 ${iconColor} pl-1.5 opacity-60 hover:opacity-100`}
                          >
-                           <Settings2 className={'w-[16px] h-[16px]'} />
+                           <Settings2 className={'w-3 h-3'} />
                          </div>
                        )}
                     </button>
@@ -853,13 +860,6 @@ export default function App() {
                  >
                     <Pill className={'w-5 h-5'} />
                     {!isPremium && <Crown className="w-3 h-3 text-amber-500 absolute -top-1 -right-1" strokeWidth={3} fill="currentColor" />}
-                 </button>
-                 <div className="flex-1"></div>
-                 <button 
-                    className={`flex-shrink-0 bg-slate-100 text-slate-600 border border-slate-200 rounded-xl active:scale-95 transition-transform flex items-center justify-center shadow-sm p-2`}
-                    onClick={() => setSettingsOpen(true)}
-                 >
-                    <Settings2 className={'w-5 h-5'} />
                  </button>
               </div>
   
@@ -987,7 +987,7 @@ export default function App() {
       />
       <BottomTicker />
       <div className="w-full max-w-md flex justify-center items-center pb-2 z-10 flex-shrink-0">
-        <label className="flex items-center gap-2 cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+        <label className="flex items-center gap-2.5 cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
           <div className="relative">
             <input 
               type="checkbox" 
@@ -998,7 +998,7 @@ export default function App() {
             <div className={`block w-8 h-4 rounded-full transition-colors ${keepAwake ? 'bg-amber-500' : 'bg-slate-700'}`}></div>
             <div className={`absolute left-0.5 top-[2px] bg-white w-3 h-3 rounded-full transition-transform ${keepAwake ? 'translate-x-4' : 'translate-x-0'}`}></div>
           </div>
-          <span className="text-[11px] text-slate-400 font-medium">Giữ màn hình luôn sáng</span>
+          <span className="text-[13px] text-slate-400 font-medium tracking-tight">Giữ màn hình luôn sáng</span>
         </label>
       </div>
     </div>
