@@ -141,6 +141,7 @@ export default function App() {
   const [isResult, setIsResult] = useState(false);
   const [showIdleOverlay, setShowIdleOverlay] = useState(false);
   const [isPremium, setIsPremium] = useState<boolean>(() => localStorage.getItem('medCalc_premium') === 'true');
+  const [keepAwake, setKeepAwake] = useState<boolean>(() => localStorage.getItem('medCalc_keepAwake') !== 'false');
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [premiumCode, setPremiumCode] = useState('');
   const [premiumError, setPremiumError] = useState(false);
@@ -171,37 +172,78 @@ export default function App() {
 
   useEffect(() => {
     let wakeLock: any = null;
+    let mounted = true;
+
     const requestWakeLock = async () => {
       try {
-        if ('wakeLock' in navigator) {
+        if ('wakeLock' in navigator && keepAwake && mounted && document.visibilityState === 'visible') {
           wakeLock = await (navigator as any).wakeLock.request('screen');
         }
       } catch (err: any) {
         console.log(`${err.name}, ${err.message}`);
       }
     };
-    requestWakeLock();
+    
+    const releaseWakeLock = async () => {
+      if (wakeLock !== null) {
+        try {
+          await wakeLock.release();
+          wakeLock = null;
+        } catch (err) {}
+      }
+    };
+
+    if (keepAwake) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
     const handleVis = () => {
-      if (wakeLock !== null && document.visibilityState === 'visible') {
+      if (keepAwake && document.visibilityState === 'visible') {
         requestWakeLock();
       }
     };
     document.addEventListener('visibilitychange', handleVis);
     return () => {
+      mounted = false;
+      releaseWakeLock();
       document.removeEventListener('visibilitychange', handleVis);
     };
-  }, []);
+  }, [keepAwake]);
   
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const tapeRef = useRef<HTMLDivElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
 
   type Theme = 'slate' | 'pink' | 'blue';
+  
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('medCalc_theme') as Theme) || 'slate');
+  const [opOrder, setOpOrder] = useState<string[]>(() => {
+     try {
+        const saved = localStorage.getItem('medCalc_opOrderArray');
+        if (saved) {
+           const parsed = JSON.parse(saved);
+           if (Array.isArray(parsed) && parsed.length === 4) return parsed;
+        }
+     } catch(e) {}
+     // migrate old
+     const old = localStorage.getItem('medCalc_opOrder');
+     if (old === 'apple') return [':', '×', '-', '+'];
+     return ['×', ':', '+', '-'];
+  });
   
   useEffect(() => {
      localStorage.setItem('medCalc_theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+     localStorage.setItem('medCalc_opOrderArray', JSON.stringify(opOrder));
+  }, [opOrder]);
+
+  useEffect(() => {
+     localStorage.setItem('medCalc_keepAwake', String(keepAwake));
+  }, [keepAwake]);
 
   const t = theme === 'slate' ? {
     wrapper: 'bg-slate-900',
@@ -534,9 +576,25 @@ export default function App() {
 
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  const renderOpBtn = (op: string) => {
+    if (op === '×') {
+      return (
+        <Btn key={op} onClick={() => performOperation('×')} className={`bg-yellow-400 text-yellow-900 hover:bg-yellow-500 shadow-md font-bold pt-1 border border-yellow-500 text-5xl`}>
+          ×
+        </Btn>
+      );
+    }
+    const displayOp = op === '-' ? '−' : op;
+    return (
+      <Btn key={op} onClick={() => performOperation(op)} className={`${t.btnOp} font-light pb-1 text-4xl`}>
+        {displayOp}
+      </Btn>
+    );
+  };
+
   return (
-    <div className="fixed inset-0 h-[100dvh] w-full bg-black flex flex-col items-center justify-center font-sans tracking-tight px-1 sm:px-2 pt-[max(env(safe-area-inset-top),4px)] sm:pt-2 pb-1 sm:pb-2 overflow-hidden">
-      <div className={`${t.app} w-full flex-1 min-h-0 max-w-md rounded-[30px] sm:rounded-[2.5rem] shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border border-[#2a2a2a]`}>
+    <div className="fixed inset-0 h-[100dvh] w-full bg-black flex flex-col items-center justify-center font-sans tracking-tight px-0 sm:px-2 pt-0 sm:pt-4 pb-0 sm:pb-4 overflow-hidden">
+      <div className={`${t.app} w-full flex-1 max-h-full sm:max-h-[820px] min-h-0 max-w-md rounded-none sm:rounded-[2.5rem] shadow-none sm:shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border-0 sm:border border-[#2a2a2a]`}>
         
         {weightWarning && (
           <div className="absolute inset-0 z-[100] bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
@@ -626,7 +684,7 @@ export default function App() {
         )}
 
         {/* Info Box Overlay */}
-        <div className="absolute top-0 inset-x-0 z-30 flex justify-center pointer-events-none">
+        <div className="absolute top-0 inset-x-0 z-30 flex justify-center pointer-events-none pt-[max(env(safe-area-inset-top),0px)]">
            <div className="bg-[#ffcb05] border-b border-x border-[#eab308] rounded-b-[1.5rem] shadow-sm pointer-events-auto px-4 py-1.5 flex items-center justify-center gap-1 w-fit">
               <span className="text-amber-900 font-bold text-[12px] sm:text-[13px] whitespace-nowrap">Đang tính liều cho trẻ</span>
               <input
@@ -658,12 +716,12 @@ export default function App() {
           ref={tapeRef}
           className="flex-1 min-h-0 overflow-y-auto flex flex-col custom-scrollbar scroll-smooth relative"
         >
-           <div className="flex-1 px-3 sm:px-4 pt-14 pb-3 space-y-3 flex flex-col">
+           <div className="flex-1 px-3 sm:px-4 pt-[calc(max(env(safe-area-inset-top),0px)+3.5rem)] pb-3 space-y-3 flex flex-col">
              {history.length === 0 && (
                 <div className="m-auto text-center text-slate-400 p-6">
                    <CalcIcon className="w-10 h-10 mx-auto mb-3 opacity-20" />
                    <p className="text-[14px] font-bold text-slate-500">Son Calculator 2.0</p>
-                   <p className="text-xs mt-1 max-w-[250px] mx-auto leading-relaxed">Máy tính này được thiết kế để phục vụ lâm sàng hàng ngày của Bác sĩ Đỗ Tiến Sơn.</p>
+                   <p className="text-[10px] mt-2 max-w-[280px] mx-auto leading-relaxed opacity-60">Máy tính cầm tay này được thiết kế để phục vụ thực hành hàng ngày, không thay thế các quyết định lâm sàng, chỉ sử dụng logic toán học, không sử dụng AI trong tính toán.</p>
                 </div>
              )}
              {history.length > 0 && (
@@ -810,22 +868,22 @@ export default function App() {
                 <div className={`grid grid-cols-4 transition-all duration-300 gap-[7px] sm:gap-2.5`}>
                   <Btn onClick={() => clearAll(false)} className={`bg-red-50 text-red-600 font-black hover:bg-red-100 text-2xl col-span-2`}>AC</Btn>
                   <Btn onClick={handleBackspace} className={`${t.btnAction} font-bold`}><Delete className={"w-7 h-7"} /></Btn>
-                  <Btn onClick={() => performOperation('×')} className={`bg-yellow-400 text-yellow-900 hover:bg-yellow-500 shadow-md font-bold pt-1 border border-yellow-500 text-5xl`}>×</Btn>
+                  {renderOpBtn(opOrder[0])}
                   
                   <Btn onClick={() => inputDigit('7')} className={`${t.btnNum} `}>7</Btn>
                   <Btn onClick={() => inputDigit('8')} className={`${t.btnNum} `}>8</Btn>
                   <Btn onClick={() => inputDigit('9')} className={`${t.btnNum} `}>9</Btn>
-                  <Btn onClick={() => performOperation(':')} className={`${t.btnOp} font-light pb-1 text-4xl`}>:</Btn>
+                  {renderOpBtn(opOrder[1])}
                   
                   <Btn onClick={() => inputDigit('4')} className={`${t.btnNum} `}>4</Btn>
                   <Btn onClick={() => inputDigit('5')} className={`${t.btnNum} `}>5</Btn>
                   <Btn onClick={() => inputDigit('6')} className={`${t.btnNum} `}>6</Btn>
-                  <Btn onClick={() => performOperation('+')} className={`${t.btnOp} font-light pb-1 text-4xl`}>+</Btn>
+                  {renderOpBtn(opOrder[2])}
                   
                   <Btn onClick={() => inputDigit('1')} className={`${t.btnNum} `}>1</Btn>
                   <Btn onClick={() => inputDigit('2')} className={`${t.btnNum} `}>2</Btn>
                   <Btn onClick={() => inputDigit('3')} className={`${t.btnNum} `}>3</Btn>
-                  <Btn onClick={() => performOperation('-')} className={`${t.btnOp} font-light pb-1 text-4xl`}>−</Btn>
+                  {renderOpBtn(opOrder[3])}
                   
                   <Btn onClick={() => inputDigit('0')} className={`${t.btnNum} `}>0</Btn>
                   <Btn onClick={inputDot} className={`${t.btnNum} pb-3 text-4xl`}>.</Btn>
@@ -845,6 +903,10 @@ export default function App() {
          onClose={() => setSettingsOpen(false)}
          theme={theme}
          setTheme={setTheme}
+         opOrder={opOrder}
+         setOpOrder={setOpOrder}
+         isPremium={isPremium}
+         onRequirePremium={() => setPremiumModalOpen(true)}
       />
 
       {premiumModalOpen && (
@@ -924,6 +986,21 @@ export default function App() {
         }}
       />
       <BottomTicker />
+      <div className="w-full max-w-md flex justify-center items-center pb-2 z-10 flex-shrink-0">
+        <label className="flex items-center gap-2 cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+          <div className="relative">
+            <input 
+              type="checkbox" 
+              className="sr-only" 
+              checked={keepAwake} 
+              onChange={(e) => setKeepAwake(e.target.checked)} 
+            />
+            <div className={`block w-8 h-4 rounded-full transition-colors ${keepAwake ? 'bg-amber-500' : 'bg-slate-700'}`}></div>
+            <div className={`absolute left-0.5 top-[2px] bg-white w-3 h-3 rounded-full transition-transform ${keepAwake ? 'translate-x-4' : 'translate-x-0'}`}></div>
+          </div>
+          <span className="text-[11px] text-slate-400 font-medium">Giữ màn hình luôn sáng</span>
+        </label>
+      </div>
     </div>
   );
 }

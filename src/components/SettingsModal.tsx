@@ -1,18 +1,27 @@
 import React from 'react';
-import { Palette, Info, Code2, Cpu, X, Download, Coffee } from 'lucide-react';
+import { Palette, Info, Code2, Cpu, X, Download, Coffee, Crown, LayoutGrid, ChevronUp, ChevronDown } from 'lucide-react';
 
 type Theme = 'slate' | 'pink' | 'blue';
+export type OpOrder = string[];
 
 export function SettingsModal({
   isOpen,
   onClose,
   theme,
-  setTheme
+  setTheme,
+  opOrder,
+  setOpOrder,
+  isPremium,
+  onRequirePremium
 }: {
   isOpen: boolean;
   onClose: () => void;
   theme: Theme;
   setTheme: (t: Theme) => void;
+  opOrder: OpOrder;
+  setOpOrder: (o: OpOrder) => void;
+  isPremium: boolean;
+  onRequirePremium: () => void;
 }) {
   if (!isOpen) return null;
 
@@ -35,7 +44,7 @@ export function SettingsModal({
           {/* Giao diện */}
           <div>
             <h3 className="font-semibold text-slate-700 mb-3 text-[14px] flex items-center gap-2 uppercase tracking-wide">
-               <Palette className="w-4 h-4 text-slate-400" /> Giao diện (Theme)
+               <Palette className="w-4 h-4 text-slate-400" /> Giao diện hệ thống
             </h3>
             <div className="grid grid-cols-3 gap-2">
                <button 
@@ -59,6 +68,52 @@ export function SettingsModal({
             </div>
           </div>
           
+          {/* Bố cục phím tính */}
+          <div>
+            <h3 className="font-semibold text-slate-700 mb-3 text-[14px] flex items-center gap-2 uppercase tracking-wide">
+               <LayoutGrid className="w-4 h-4 text-slate-400" /> Bố cục phím toán tử
+               {!isPremium && <Crown className="w-3.5 h-3.5 text-amber-500 ml-1" fill="currentColor" />}
+            </h3>
+            <div className="relative">
+               {!isPremium && (
+                 <div 
+                   className="absolute inset-[-4px] z-10 rounded-xl cursor-pointer bg-white/40 backdrop-blur-[1px]"
+                   onClick={() => {
+                      onClose();
+                      onRequirePremium();
+                   }}
+                 />
+               )}
+               <div className={`flex flex-row gap-2 ${!isPremium ? 'opacity-60' : ''}`}>
+                 {opOrder.map((op, idx) => (
+                    <div 
+                      key={op}
+                      draggable={isPremium}
+                      onDragStart={(e) => {
+                         e.dataTransfer.setData('text/plain', idx.toString());
+                      }}
+                      onDragOver={(e) => { e.preventDefault(); }}
+                      onDrop={(e) => {
+                         e.preventDefault();
+                         const dragData = e.dataTransfer.getData('text/plain');
+                         if(dragData === '') return;
+                         const draggedIdx = parseInt(dragData, 10);
+                         if (draggedIdx !== idx && !isNaN(draggedIdx)) {
+                            const newOrder = [...opOrder];
+                            const el = newOrder.splice(draggedIdx, 1)[0];
+                            newOrder.splice(idx, 0, el);
+                            setOpOrder(newOrder);
+                         }
+                      }}
+                      className="flex-1 flex items-center justify-center py-3 bg-slate-50 border border-slate-200 rounded-xl cursor-grab active:cursor-grabbing font-mono font-black text-2xl text-slate-700 shadow-sm transition-all hover:bg-white hover:shadow-md hover:-translate-y-0.5"
+                    >
+                      {op === '-' ? '−' : op}
+                    </div>
+                 ))}
+               </div>
+            </div>
+          </div>
+
           {/* Tác giả */}
           <div>
             <h3 className="font-semibold text-slate-700 mb-3 text-[14px] flex items-center gap-2 uppercase tracking-wide">
@@ -85,7 +140,7 @@ export function SettingsModal({
             </h3>
             <div className="bg-blue-50/50 text-slate-700 p-4 rounded-xl text-[13px] leading-relaxed border border-blue-100 shadow-inner">
                <ul className="list-decimal pl-4 space-y-2">
-                 <li>Mở địa chỉ <strong>https://soncal.vercel.app</strong> trên trình duyệt <strong>Safari</strong>.</li>
+                 <li>Mở địa chỉ <a href="https://soncal.vercel.app" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">soncal.vercel.app</a> trên trình duyệt <strong>Safari</strong>.</li>
                  <li>Chạm vào biểu tượng <strong>Share</strong> (Chia sẻ) ở thanh công cụ dưới cùng.</li>
                  <li>Cuộn xuống và chọn <strong>Add to Home Screen</strong> (Thêm vào màn hình chính).</li>
                  <li>Bấm <strong>Add</strong> (Thêm) ở góc trên bên phải.</li>
