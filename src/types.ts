@@ -5,6 +5,7 @@ export interface Preset {
   concentrationMg?: number;
   concentrationMl?: number;
   timesPerDay?: number;
+  bottleVolume?: number;
   unit?: string;
   isSpecial?: boolean;
   isSolid?: boolean;
@@ -22,6 +23,7 @@ export interface HistoryItem {
   volumeNum?: number;
   timesPerDay?: number;
   unit?: string;
+  bottleVolume?: number;
   isMaxDoseLimited?: boolean;
   maxDoseStr?: string;
   hasRounded?: boolean;

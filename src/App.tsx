@@ -597,6 +597,10 @@ export default function App() {
         if (!isNaN(dStr) && dStr > 0) {
             const totalVol = precision(volumeNum * preset.timesPerDay * dStr);
             totalVolumeStr = `Tổng ${dStr} ngày: ${formatResult(totalVol)} ${preset.unit}`;
+            if (preset.bottleVolume && preset.bottleVolume > 0) {
+                const bottles = Math.ceil(totalVol / preset.bottleVolume);
+                totalVolumeStr += ` (${preset.bottleVolume}${preset.unit}/lọ - ${bottles} lọ)`;
+            }
         }
      }
      
@@ -610,6 +614,7 @@ export default function App() {
         volumeNum: volumeNum,
         timesPerDay: preset.timesPerDay,
         unit: preset.unit,
+        bottleVolume: preset.bottleVolume,
         isMaxDoseLimited,
         maxDoseStr
      });
@@ -821,6 +826,10 @@ export default function App() {
                         if (item.volumeNum && item.timesPerDay && !isNaN(dStr) && dStr > 0) {
                            const newTotalVol = precision(item.volumeNum * item.timesPerDay * dStr);
                            displayTotal = `Tổng ${dStr} ngày: ${formatResult(newTotalVol)} ${item.unit || ''}`;
+                           if (item.bottleVolume && item.bottleVolume > 0) {
+                               const bottles = Math.ceil(newTotalVol / item.bottleVolume);
+                               displayTotal += ` (${item.bottleVolume}${item.unit || ''}/lọ - ${bottles} lọ)`;
+                           }
                         }
                         
                         const hasRounded = item.result.includes('*') || (displayTotal || '').includes('*');

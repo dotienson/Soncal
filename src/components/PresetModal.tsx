@@ -23,6 +23,7 @@ export function PresetModal({
   const [isSolid, setIsSolid] = useState(false);
   const [color, setColor] = useState('');
   const [maxDoseMg, setMaxDoseMg] = useState('');
+  const [bottleVolume, setBottleVolume] = useState('');
 
   const PRESET_COLORS = [
     { value: '', label: 'Mặc định (Trắng)', bg: 'bg-white', border: 'border-slate-200' },
@@ -45,6 +46,7 @@ export function PresetModal({
       setIsSolid(initialData.isSolid || false);
       setColor(initialData.color || '');
       setMaxDoseMg(initialData.maxDoseMg?.toString() || '');
+      setBottleVolume(initialData.bottleVolume?.toString() || '');
     } else {
       setName('');
       setDosePerKg('15');
@@ -55,6 +57,7 @@ export function PresetModal({
       setIsSolid(false);
       setColor('');
       setMaxDoseMg('');
+      setBottleVolume('');
     }
   }, [initialData, isOpen]);
 
@@ -70,6 +73,7 @@ export function PresetModal({
     const cMl = isSolid ? 1 : parseFloat(concentrationMl);
     const tPd = parseFloat(timesPerDay) || 1;
     const maxD = maxDoseMg.trim() === '' ? undefined : parseFloat(maxDoseMg);
+    const bVol = bottleVolume.trim() === '' ? undefined : parseFloat(bottleVolume);
     
     if (isNaN(dPkg) || isNaN(cMg) || isNaN(cMl) || cMg === 0) {
       alert("Hệ số tính toán không hợp lệ");
@@ -77,6 +81,10 @@ export function PresetModal({
     }
     if (maxDoseMg.trim() !== '' && (isNaN(maxD as number) || (maxD as number) <= 0)) {
        alert("Liều tối đa không hợp lệ");
+       return;
+    }
+    if (bottleVolume.trim() !== '' && (isNaN(bVol as number) || (bVol as number) <= 0)) {
+       alert("Thể tích lọ không hợp lệ");
        return;
     }
     
@@ -87,6 +95,7 @@ export function PresetModal({
       concentrationMg: cMg,
       concentrationMl: cMl,
       timesPerDay: tPd,
+      bottleVolume: bVol,
       unit: unit.trim() || (isSolid ? 'gói' : 'mL'),
       isSolid,
       color,
@@ -201,13 +210,16 @@ export function PresetModal({
              </div>
           </div>
 
-          <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100 text-sm text-blue-800">
-             <div className="font-bold text-xs uppercase text-blue-600 mb-1 tracking-wider">Preview Nhanh (Bé 10kg)</div>
-             <div className="font-mono bg-white p-2.5 rounded-lg border border-blue-100 font-medium leading-relaxed text-[13px]">
-               • 10kg × {Number(dosePerKg)||0} mg = <strong>{10 * (Number(dosePerKg)||0)} mg</strong><br/>
-               • {10 * (Number(dosePerKg)||0)} mg : {Number(concentrationMg)||1} {!isSolid && Number(concentrationMl) !== 1 ? `× ${Number(concentrationMl)}` : ''} = <span className="font-black text-emerald-600 text-[15px]">{Number(previewVal.toPrecision(4))}</span> {unit || (isSolid ? 'gói' : 'mL')}
-               {Number(timesPerDay) > 0 && <div className="text-xs text-slate-500 mt-1 pt-1 border-t border-slate-100">Dùng {Number(timesPerDay)} lần/ngày</div>}
-             </div>
+          <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Thể tích lọ (mL) <span className="text-slate-400 font-normal normal-case">(Tùy chọn)</span></label>
+             <input 
+               type="number" 
+               inputMode="decimal" 
+               value={bottleVolume} 
+               onChange={e => setBottleVolume(e.target.value)} 
+               className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-mono font-bold text-slate-700 placeholder:text-slate-300" 
+               placeholder="VD: 60, 100..."
+             />
           </div>
 
           <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">

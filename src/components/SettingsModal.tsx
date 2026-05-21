@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Palette, Info, Code2, Cpu, X, Download, Coffee, Crown, LayoutGrid, ChevronUp, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { Palette, Info, Code2, Cpu, X, Download, Coffee, Crown, LayoutGrid, ChevronUp, ChevronDown, Eye, EyeOff, Copy, Check } from 'lucide-react';
 
 type Theme = 'slate' | 'pink' | 'blue';
 export type OpOrder = string[];
@@ -24,6 +24,14 @@ export function SettingsModal({
   onRequirePremium: () => void;
 }) {
   const [showArch, setShowArch] = useState(false);
+
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText("120274848");
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   if (!isOpen) return null;
 
@@ -188,8 +196,17 @@ export function SettingsModal({
             </h3>
             <div className="bg-amber-50 text-slate-800 p-4 rounded-xl text-sm leading-relaxed border border-amber-100 shadow-inner flex flex-col items-center">
                <p className="mb-3 text-center text-slate-600 font-medium">Nếu bạn thấy công cụ hữu ích, có thể ủng hộ tác giả qua kênh bên dưới:</p>
-               <div className="bg-white p-3 rounded-lg border border-amber-200 block w-full text-center shadow-sm">
-                  <p className="font-bold text-xl text-slate-800 tracking-wider">120274848</p>
+               <div className="bg-white p-3 rounded-lg border border-amber-200 block w-full text-center shadow-sm relative">
+                  <div className="flex items-center justify-center gap-2">
+                     <p className="font-bold text-xl text-slate-800 tracking-wider">120274848</p>
+                     <button
+                        onClick={handleCopy}
+                        className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                        title="Copy số tài khoản"
+                     >
+                        {isCopied ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5" />}
+                     </button>
+                  </div>
                   <p className="text-slate-500 font-medium text-xs mt-1">VPBank <span className="mx-1">•</span> Do Tien Son</p>
                </div>
             </div>
