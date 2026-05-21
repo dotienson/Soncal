@@ -1,5 +1,5 @@
 import React from 'react';
-import { Palette, Info, Code2, Cpu, X } from 'lucide-react';
+import { Palette, Info, Code2, Cpu, X, Download, Coffee } from 'lucide-react';
 
 type Theme = 'slate' | 'pink' | 'blue';
 
@@ -21,7 +21,7 @@ export function SettingsModal({
       <div className="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto custom-scrollbar shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="sticky top-0 z-10 p-5 border-b border-slate-100 flex justify-between items-center bg-white/90 backdrop-blur-md">
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-             <Cpu className="w-5 h-5 text-slate-500" /> System Params
+             <Cpu className="w-5 h-5 text-slate-500" /> Cài đặt hệ thống
           </h2>
           <button 
              onClick={onClose} 
@@ -35,7 +35,7 @@ export function SettingsModal({
           {/* Giao diện */}
           <div>
             <h3 className="font-semibold text-slate-700 mb-3 text-[14px] flex items-center gap-2 uppercase tracking-wide">
-               <Palette className="w-4 h-4 text-slate-400" /> Interface Theme
+               <Palette className="w-4 h-4 text-slate-400" /> Giao diện (Theme)
             </h3>
             <div className="grid grid-cols-3 gap-2">
                <button 
@@ -62,32 +62,69 @@ export function SettingsModal({
           {/* Tác giả */}
           <div>
             <h3 className="font-semibold text-slate-700 mb-3 text-[14px] flex items-center gap-2 uppercase tracking-wide">
-               <Info className="w-4 h-4 text-slate-400" /> Developer
+               <Info className="w-4 h-4 text-slate-400" /> Tác giả
             </h3>
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 font-mono text-sm shadow-inner">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 font-mono text-sm shadow-inner group relative">
                <p className="font-bold text-slate-800 text-[15px]">ThS. BS. Đỗ Tiến Sơn</p>
                <p className="text-slate-500 mt-1">Lead Developer & UI/UX Designer</p>
+               <a 
+                  href="https://www.linkedin.com/in/dotienson" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex mt-2 text-blue-600 hover:text-blue-700 hover:underline active:text-blue-800 transition-colors"
+               >
+                 linkedin.com/in/dotienson
+               </a>
+            </div>
+          </div>
+
+          {/* iOS Add to Home Screen */}
+          <div>
+            <h3 className="font-semibold text-slate-700 mb-3 text-[14px] flex items-center gap-2 uppercase tracking-wide">
+               <Download className="w-4 h-4 text-slate-400" /> App cho iOS (Add to Home Screen)
+            </h3>
+            <div className="bg-blue-50/50 text-slate-700 p-4 rounded-xl text-[13px] leading-relaxed border border-blue-100 shadow-inner">
+               <ul className="list-decimal pl-4 space-y-2">
+                 <li>Mở địa chỉ <strong>https://soncal.vercel.app</strong> trên trình duyệt <strong>Safari</strong>.</li>
+                 <li>Chạm vào biểu tượng <strong>Share</strong> (Chia sẻ) ở thanh công cụ dưới cùng.</li>
+                 <li>Cuộn xuống và chọn <strong>Add to Home Screen</strong> (Thêm vào màn hình chính).</li>
+                 <li>Bấm <strong>Add</strong> (Thêm) ở góc trên bên phải.</li>
+               </ul>
             </div>
           </div>
 
           {/* Thuật toán */}
           <div>
             <h3 className="font-semibold text-slate-700 mb-3 text-[14px] flex items-center gap-2 uppercase tracking-wide">
-               <Code2 className="w-4 h-4 text-slate-400" /> System Architecture
+               <Code2 className="w-4 h-4 text-slate-400" /> Kiến trúc hệ thống
             </h3>
             <div className="bg-slate-900 text-slate-300 p-4 rounded-xl text-xs leading-relaxed space-y-4 font-mono shadow-inner border border-slate-700">
                <p>
                  <strong className="text-sky-400 block mb-1 uppercase text-[10px] tracking-wider">Engine Execution</strong> 
-                 Runs directly via native hardware-accelerated JavaScript engines (V8/Nitro). Native compilation at the execution layer yields near-zero latency, circumventing network round-trip overhead.
+                 Chạy trực tiếp qua native hardware-accelerated JavaScript engines (V8/Nitro). Native compilation ở lớp thực thi (execution layer) mang lại độ trễ gần như bằng 0 (near-zero latency), không bị overhead của network round-trip.
                </p>
                <p>
                  <strong className="text-sky-400 block mb-1 uppercase text-[10px] tracking-wider">Mathematical Reliability</strong>
-                 Strict algebraic precedence parsing (PEMDAS). AST generation handles evaluation with absolute determinism, making it completely reliable for clinical contexts.
+                 Strict algebraic precedence parsing (PEMDAS). Trình tạo AST (AST generation) xử lý tính toán với độ chính xác tuyệt đối (absolute determinism), hoàn toàn tin cậy cho tính toán lâm sàng.
                </p>
                <p>
                  <strong className="text-sky-400 block mb-1 uppercase text-[10px] tracking-wider">Floating-point Mitigation</strong>
-                 Uses 64-bit precision (IEEE 754). Features a built-in differential noise reduction patch <code>(toPrecision(12))</code> to resolve inherent binary artifacting (e.g., 0.1 + 0.2 rendering anomaly), ensuring perfect decimal scaling for fractional dosing.
+                 Sử dụng 64-bit precision (IEEE 754). Tích hợp sẵn hàm differential noise reduction <code>(toPrecision(12))</code> giúp loại bỏ lỗi nhị phân (binary artifacting - ví dụ: 0.1 + 0.2), đảm bảo scale thập phân hoàn hảo đối với liều chia nhỏ.
                </p>
+            </div>
+          </div>
+
+          {/* Donate */}
+          <div>
+            <h3 className="font-semibold text-slate-700 mb-3 text-[14px] flex items-center gap-2 uppercase tracking-wide">
+               <Coffee className="w-4 h-4 text-slate-400" /> Buy Me A Coffee
+            </h3>
+            <div className="bg-amber-50 text-slate-800 p-4 rounded-xl text-sm leading-relaxed border border-amber-100 shadow-inner flex flex-col items-center">
+               <p className="mb-3 text-center text-slate-600 font-medium">Nếu bạn thấy công cụ hữu ích, có thể ủng hộ tác giả qua kênh bên dưới:</p>
+               <div className="bg-white p-3 rounded-lg border border-amber-200 block w-full text-center shadow-sm">
+                  <p className="font-bold text-xl text-slate-800 tracking-wider">120274848</p>
+                  <p className="text-slate-500 font-medium text-xs mt-1">VPBank <span className="mx-1">•</span> Do Tien Son</p>
+               </div>
             </div>
           </div>
           

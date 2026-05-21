@@ -535,8 +535,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col items-center justify-center font-sans tracking-tight px-1 sm:p-2 pt-[max(env(safe-area-inset-top),4px)] pb-1 sm:pb-2 overflow-hidden">
-      <div className={`${t.app} w-full h-full flex-1 max-h-full sm:max-h-[840px] max-w-md rounded-[2.25rem] sm:rounded-[2.5rem] shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border border-[#2a2a2a]`}>
+    <div className="fixed inset-0 h-[100dvh] w-full bg-black flex flex-col items-center justify-center font-sans tracking-tight px-1 sm:px-2 pt-[max(env(safe-area-inset-top),4px)] sm:pt-2 pb-1 sm:pb-2 overflow-hidden">
+      <div className={`${t.app} w-full flex-1 min-h-0 max-w-md rounded-[30px] sm:rounded-[2.5rem] shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border border-[#2a2a2a]`}>
         
         {weightWarning && (
           <div className="absolute inset-0 z-[100] bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
