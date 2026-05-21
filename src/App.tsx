@@ -131,7 +131,6 @@ export default function App() {
     return val && ['3', '5', '7'].includes(val) ? val : '7';
   });
 
-  const [dismissedDesktopWarning, setDismissedDesktopWarning] = useState(false);
   const [isDesktopOrTablet, setIsDesktopOrTablet] = useState(false);
 
   useEffect(() => {
@@ -642,7 +641,7 @@ export default function App() {
     <div 
       className="fixed inset-0 h-[100dvh] w-full bg-black flex flex-col items-center justify-center font-sans tracking-tight px-0 sm:px-2 pt-0 sm:pt-4 pb-0 sm:pb-4 overflow-hidden select-none"
     >
-      {isDesktopOrTablet && !dismissedDesktopWarning && (
+      {isDesktopOrTablet && (
         <div className="absolute inset-0 z-[200] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl border border-slate-200 flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
@@ -652,12 +651,6 @@ export default function App() {
             <p className="text-slate-600 mb-6 font-medium text-sm leading-relaxed">
               Ứng dụng SonCal hiện chỉ hỗ trợ thiết bị điện thoại (màn hình dọc) để tối ưu về giao diện!
             </p>
-            <button 
-              onClick={() => setDismissedDesktopWarning(true)} 
-              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl text-lg shadow-sm transition-colors"
-            >
-              Thoát
-            </button>
           </div>
         </div>
       )}
