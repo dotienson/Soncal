@@ -4,10 +4,13 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Delete, Settings2, Calculator as CalcIcon, Menu, Pill, Crown, Trash2 } from 'lucide-react';
+import { Delete, Settings2, Calculator as CalcIcon, Menu, Pill, Crown, Trash2, Info } from 'lucide-react';
 import { Preset, HistoryItem } from './types';
 import { PresetModal } from './components/PresetModal';
 import { SettingsModal } from './components/SettingsModal';
+import NoSleep from 'nosleep.js';
+
+let noSleepInstance: any = null;
 
 const DEFAULT_PRESETS: Preset[] = [
   { id: 'aug600', name: 'Aug 600', dosePerKg: 45, concentrationMg: 600, concentrationMl: 5, timesPerDay: 2, unit: 'mL' },
@@ -128,6 +131,20 @@ export default function App() {
     return val && ['3', '5', '7'].includes(val) ? val : '7';
   });
 
+  const [dismissedDesktopWarning, setDismissedDesktopWarning] = useState(false);
+  const [isDesktopOrTablet, setIsDesktopOrTablet] = useState(false);
+
+  useEffect(() => {
+    const checkScreen = () => {
+       const isWide = window.innerWidth >= 768;
+       const isLandscape = window.innerWidth > window.innerHeight && window.innerWidth >= 640;
+       setIsDesktopOrTablet(isWide || isLandscape);
+    };
+    checkScreen();
+    window.addEventListener('resize', checkScreen);
+    return () => window.removeEventListener('resize', checkScreen);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('medCalc_weight', weightStr);
   }, [weightStr]);
@@ -170,26 +187,30 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    let wakeLock: any = null;
     let mounted = true;
+
+    if (!noSleepInstance) {
+       noSleepInstance = new NoSleep();
+    }
 
     const requestWakeLock = async () => {
       try {
-        if ('wakeLock' in navigator && keepAwake && mounted && document.visibilityState === 'visible') {
-          wakeLock = await (navigator as any).wakeLock.request('screen');
+        if (keepAwake && mounted && document.visibilityState === 'visible') {
+           if (!noSleepInstance.isEnabled) {
+              await noSleepInstance.enable();
+           }
         }
       } catch (err: any) {
         console.log(`${err.name}, ${err.message}`);
       }
     };
     
-    const releaseWakeLock = async () => {
-      if (wakeLock !== null) {
-        try {
-          await wakeLock.release();
-          wakeLock = null;
-        } catch (err) {}
-      }
+    const releaseWakeLock = () => {
+      try {
+         if (noSleepInstance && noSleepInstance.isEnabled) {
+            noSleepInstance.disable();
+         }
+      } catch (err) {}
     };
 
     if (keepAwake) {
@@ -201,13 +222,28 @@ export default function App() {
     const handleVis = () => {
       if (keepAwake && document.visibilityState === 'visible') {
         requestWakeLock();
+      } else if (document.visibilityState !== 'visible') {
+        releaseWakeLock();
       }
     };
+    
+    // Some browsers need explicit user interaction to start media playback
+    const enableOnInteraction = () => {
+       if (keepAwake && !noSleepInstance.isEnabled) {
+          requestWakeLock();
+       }
+    };
+
     document.addEventListener('visibilitychange', handleVis);
+    document.addEventListener('click', enableOnInteraction);
+    document.addEventListener('touchstart', enableOnInteraction);
+    
     return () => {
       mounted = false;
       releaseWakeLock();
       document.removeEventListener('visibilitychange', handleVis);
+      document.removeEventListener('click', enableOnInteraction);
+      document.removeEventListener('touchstart', enableOnInteraction);
     };
   }, [keepAwake]);
   
@@ -606,6 +642,26 @@ export default function App() {
     <div 
       className="fixed inset-0 h-[100dvh] w-full bg-black flex flex-col items-center justify-center font-sans tracking-tight px-0 sm:px-2 pt-0 sm:pt-4 pb-0 sm:pb-4 overflow-hidden select-none"
     >
+      {isDesktopOrTablet && !dismissedDesktopWarning && (
+        <div className="absolute inset-0 z-[200] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-2xl border border-slate-200 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+               <Info className="w-8 h-8 text-amber-500" />
+            </div>
+            <h2 className="text-slate-800 text-xl font-black mb-2 leading-tight">Thiết bị không tối ưu</h2>
+            <p className="text-slate-600 mb-6 font-medium text-sm leading-relaxed">
+              Ứng dụng SonCal hiện chỉ hỗ trợ thiết bị điện thoại (màn hình dọc) để tối ưu về giao diện!
+            </p>
+            <button 
+              onClick={() => setDismissedDesktopWarning(true)} 
+              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl text-lg shadow-sm transition-colors"
+            >
+              Thoát
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={`${t.app} w-full flex-1 max-h-full sm:max-h-[820px] min-h-0 max-w-md rounded-none sm:rounded-[2.5rem] shadow-none sm:shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border-0 sm:border border-[#2a2a2a]`}>
         
         {weightWarning && (

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Palette, Info, Code2, Cpu, X, Download, Coffee, Crown, LayoutGrid, ChevronUp, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Palette, Info, Code2, Cpu, X, Download, Coffee, Crown, LayoutGrid, ChevronUp, ChevronDown, Eye, EyeOff } from 'lucide-react';
 
 type Theme = 'slate' | 'pink' | 'blue';
 export type OpOrder = string[];
@@ -23,6 +23,8 @@ export function SettingsModal({
   isPremium: boolean;
   onRequirePremium: () => void;
 }) {
+  const [showArch, setShowArch] = useState(false);
+
   if (!isOpen) return null;
 
   return (
@@ -150,10 +152,19 @@ export function SettingsModal({
 
           {/* Thuật toán */}
           <div>
-            <h3 className="font-semibold text-slate-700 mb-3 text-[14px] flex items-center gap-2 uppercase tracking-wide">
-               <Code2 className="w-4 h-4 text-slate-400" /> Kiến trúc hệ thống
-            </h3>
-            <div className="bg-slate-900 text-slate-300 p-4 rounded-xl text-xs leading-relaxed space-y-4 font-mono shadow-inner border border-slate-700">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-slate-700 text-[14px] flex items-center gap-2 uppercase tracking-wide">
+                 <Code2 className="w-4 h-4 text-slate-400" /> Kiến trúc hệ thống
+              </h3>
+              <button 
+                onClick={() => setShowArch(!showArch)}
+                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                {showArch ? <><EyeOff className="w-3.5 h-3.5" /> Ẩn</> : <><Eye className="w-3.5 h-3.5" /> Hiện</>}
+              </button>
+            </div>
+            {showArch && (
+            <div className="bg-slate-900 text-slate-300 p-4 rounded-xl text-xs leading-relaxed space-y-4 font-mono shadow-inner border border-slate-700 mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
                <p>
                  <strong className="text-sky-400 block mb-1 uppercase text-[10px] tracking-wider">Engine Execution</strong> 
                  Chạy trực tiếp qua native hardware-accelerated JavaScript engines (V8/Nitro). Native compilation ở lớp thực thi (execution layer) mang lại độ trễ gần như bằng 0 (near-zero latency), không bị overhead của network round-trip.
@@ -167,6 +178,7 @@ export function SettingsModal({
                  Sử dụng 64-bit precision (IEEE 754). Tích hợp sẵn hàm differential noise reduction <code>(toPrecision(12))</code> giúp loại bỏ lỗi nhị phân (binary artifacting - ví dụ: 0.1 + 0.2), đảm bảo scale thập phân hoàn hảo đối với liều chia nhỏ.
                </p>
             </div>
+            )}
           </div>
 
           {/* Donate */}
