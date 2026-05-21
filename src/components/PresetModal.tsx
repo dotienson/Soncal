@@ -35,6 +35,16 @@ export function PresetModal({
     { value: 'pink', label: 'Hồng', bg: 'bg-pink-100', border: 'border-pink-200' },
   ];
 
+  const handleNumChange = (setter: React.Dispatch<React.SetStateAction<string>>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/,/g, '.');
+    val = val.replace(/[^\d.]/g, '');
+    const parts = val.split('.');
+    if (parts.length > 2) {
+      val = parts[0] + '.' + parts.slice(1).join('');
+    }
+    setter(val);
+  };
+
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
@@ -129,10 +139,10 @@ export function PresetModal({
              <div>
                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Liều (mg/kg/lần)</label>
                <input 
-                 type="number" 
+                 type="text" 
                  inputMode="decimal" 
                  value={dosePerKg} 
-                 onChange={e => setDosePerKg(e.target.value)} 
+                 onChange={handleNumChange(setDosePerKg)} 
                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-mono font-bold text-blue-700 placeholder:text-slate-300" 
                  placeholder="VD: 15 hoặc 45..."
                />
@@ -141,10 +151,10 @@ export function PresetModal({
              <div>
                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Số lần dùng/ngày</label>
                  <input 
-                   type="number" 
+                   type="text" 
                    inputMode="decimal" 
                    value={timesPerDay} 
-                   onChange={e => setTimesPerDay(e.target.value)} 
+                   onChange={handleNumChange(setTimesPerDay)} 
                    className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-mono font-bold text-slate-700 placeholder:text-slate-300" 
                    placeholder="VD: 2, 3..."
                  />
@@ -153,10 +163,10 @@ export function PresetModal({
              <div>
                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Liều tối đa/lần (mg) <span className="text-slate-400 font-normal normal-case">(Tùy chọn)</span></label>
                  <input 
-                   type="number" 
+                   type="text" 
                    inputMode="decimal" 
                    value={maxDoseMg} 
-                   onChange={e => setMaxDoseMg(e.target.value)} 
+                   onChange={handleNumChange(setMaxDoseMg)} 
                    className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-mono font-bold text-slate-700 placeholder:text-slate-300" 
                    placeholder="VD: 500, 1000..."
                  />
@@ -178,19 +188,19 @@ export function PresetModal({
                  </div>
                  <div className="flex items-center gap-2">
                      <input 
-                       type="number" 
+                       type="text" 
                        inputMode="decimal" 
                        value={concentrationMg} 
-                       onChange={e => setConcentrationMg(e.target.value)} 
+                       onChange={handleNumChange(setConcentrationMg)} 
                        className={`w-20 border border-slate-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-center font-bold ${isSolid ? 'text-emerald-700' : 'text-blue-700'}`} 
                      />
                      <span className="text-slate-500 font-bold text-sm">mg :</span>
                      {!isSolid && (
                        <input 
-                         type="number" 
+                         type="text" 
                          inputMode="decimal" 
                          value={concentrationMl} 
-                         onChange={e => setConcentrationMl(e.target.value)} 
+                         onChange={handleNumChange(setConcentrationMl)} 
                          className="w-16 border border-slate-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-center font-bold text-blue-700" 
                        />
                      )}
@@ -213,10 +223,10 @@ export function PresetModal({
           <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Thể tích lọ (mL) <span className="text-slate-400 font-normal normal-case">(Tùy chọn)</span></label>
              <input 
-               type="number" 
+               type="text" 
                inputMode="decimal" 
                value={bottleVolume} 
-               onChange={e => setBottleVolume(e.target.value)} 
+               onChange={handleNumChange(setBottleVolume)} 
                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-mono font-bold text-slate-700 placeholder:text-slate-300" 
                placeholder="VD: 60, 100..."
              />
