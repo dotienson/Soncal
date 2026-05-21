@@ -490,7 +490,9 @@ export default function App() {
      
      let resultStr = `${formatResult(volume)} mL (${formatResult(doseMg)} mg) mỗi lần × 2 lần/ngày`;
      let totalVolumeStr = '';
-     const dStr = parseFloat(daysStr);
+     
+     setDaysStr('5');
+     const dStr = 5;
      
      if (!isNaN(dStr) && dStr > 0) {
          const totalVol = precision(volume * 2 * dStr);
