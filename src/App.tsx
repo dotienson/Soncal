@@ -593,7 +593,9 @@ export default function App() {
   };
 
   return (
-    <div className="fixed inset-0 h-[100dvh] w-full bg-black flex flex-col items-center justify-center font-sans tracking-tight px-0 sm:px-2 pt-0 sm:pt-4 pb-0 sm:pb-4 overflow-hidden">
+    <div 
+      className="fixed inset-0 h-[100dvh] w-full bg-black flex flex-col items-center justify-center font-sans tracking-tight px-0 sm:px-2 pt-0 sm:pt-4 pb-0 sm:pb-4 overflow-hidden select-none"
+    >
       <div className={`${t.app} w-full flex-1 max-h-full sm:max-h-[820px] min-h-0 max-w-md rounded-none sm:rounded-[2.5rem] shadow-none sm:shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border-0 sm:border border-[#2a2a2a]`}>
         
         {weightWarning && (
@@ -806,13 +808,6 @@ export default function App() {
             <div className={`transition-all duration-300 flex flex-col w-full`}>
               {/* Presets Bar */}
               <div className={`border-y border-slate-100 bg-slate-50 flex overflow-x-auto hide-scrollbar gap-2 px-4 py-2.5`} style={{ WebkitOverflowScrolling: 'touch' }}>
-                 <button 
-                    className={`flex-shrink-0 bg-slate-100 text-slate-600 border border-slate-200 rounded-xl active:scale-95 transition-transform flex items-center justify-center shadow-sm p-2`}
-                    onClick={() => setSettingsOpen(true)}
-                 >
-                    <Settings2 className={'w-5 h-5'} />
-                 </button>
-                 <div className="w-[1px] h-6 bg-slate-200 flex-shrink-0 mx-1 self-center"></div>
                  {presets.map(p => {
                     const isTamiflu = p.id === 'tamiflu';
                     let btnBg = 'bg-white border-slate-200 text-slate-700';
@@ -986,20 +981,21 @@ export default function App() {
         }}
       />
       <BottomTicker />
-      <div className="w-full max-w-md flex justify-center items-center pb-2 z-10 flex-shrink-0">
-        <label className="flex items-center gap-2.5 cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
-          <div className="relative">
-            <input 
-              type="checkbox" 
-              className="sr-only" 
-              checked={keepAwake} 
-              onChange={(e) => setKeepAwake(e.target.checked)} 
-            />
-            <div className={`block w-8 h-4 rounded-full transition-colors ${keepAwake ? 'bg-amber-500' : 'bg-slate-700'}`}></div>
-            <div className={`absolute left-0.5 top-[2px] bg-white w-3 h-3 rounded-full transition-transform ${keepAwake ? 'translate-x-4' : 'translate-x-0'}`}></div>
-          </div>
-          <span className="text-[13px] text-slate-400 font-medium tracking-tight">Giữ màn hình luôn sáng</span>
-        </label>
+      <div className="w-full max-w-md flex justify-center items-center px-4 pb-3 z-10 flex-shrink-0 gap-5 -mt-1">
+        <button 
+          onClick={() => setKeepAwake(!keepAwake)}
+          className="flex items-center gap-2 cursor-pointer opacity-90 hover:opacity-100 transition-opacity"
+        >
+          <div className={`w-2 h-2 rounded-full shadow-sm ${keepAwake ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <span className="text-[11px] text-slate-600 font-medium tracking-tight">Giữ màn hình luôn sáng</span>
+        </button>
+        <button 
+          onClick={() => setSettingsOpen(true)}
+          className="flex items-center gap-1 cursor-pointer opacity-90 hover:opacity-100 transition-opacity text-slate-600"
+        >
+          <Settings2 className="w-3 h-3" />
+          <span className="text-[11px] font-medium tracking-tight">Cài đặt • Do Tien Son &copy; 2026</span>
+        </button>
       </div>
     </div>
   );
