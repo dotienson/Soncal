@@ -12,7 +12,7 @@ import { SettingsModal } from './components/SettingsModal';
 const DEFAULT_PRESETS: Preset[] = [
   { id: 'aug600', name: 'Aug 600', dosePerKg: 45, concentrationMg: 600, concentrationMl: 5, timesPerDay: 2, unit: 'mL' },
   { id: 'para250', name: 'Para 250', dosePerKg: 15, concentrationMg: 250, concentrationMl: 1, timesPerDay: 4, unit: 'gói' },
-  { id: 'tamiflu', name: 'Tamiflu', isSpecial: true },
+  { id: 'tamiflu', name: 'Oseltamivir', isSpecial: true },
 ];
 
 const precision = (num: number) => parseFloat(num.toPrecision(12));
@@ -150,7 +150,6 @@ export default function App() {
     let idleTimer: ReturnType<typeof setTimeout>;
     
     const resetIdleTimer = () => {
-      setShowIdleOverlay(false);
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
         setShowIdleOverlay(true);
@@ -298,9 +297,13 @@ export default function App() {
        if (saved) {
           const parsed = JSON.parse(saved);
           if (!parsed.find((p: Preset) => p.id === 'tamiflu')) {
-             return [...parsed, { id: 'tamiflu', name: 'Tamiflu', isSpecial: true }];
+             return [...parsed, { id: 'tamiflu', name: 'Oseltamivir', isSpecial: true }];
           }
-          return parsed;
+          // Optionally update existing tamiflu name if it's still 'Tamiflu'
+          return parsed.map((p: Preset) => {
+             if (p.id === 'tamiflu' && p.name === 'Tamiflu') return {...p, name: 'Oseltamivir'};
+             return p;
+          });
        }
      } catch(e) {}
      return DEFAULT_PRESETS;
@@ -456,10 +459,14 @@ export default function App() {
      let doseMg = 0;
      let volume = 0;
      let note = '';
+     let warning = '';
      
      if (w <= 15) {
         if (isUnderOne) {
            doseMg = w * 3;
+           if (doseMg > 30) {
+               warning = 'Vui lòng kiểm tra lại cân nặng trẻ!';
+           }
            volume = precision(doseMg / 5);
            note = `3 mg/kg`;
         } else {
@@ -493,13 +500,14 @@ export default function App() {
      addHistory({
         id: Date.now().toString(),
         type: 'preset',
-        title: `Tamiflu (Cân: ${w} kg)`,
+        title: `Oseltamivir (Cân: ${w} kg)`,
         expression: [`• Cách 1 viên (75mg) pha 15 mL nước`, `• Lấy liều: ${note}`],
         result: resultStr,
         totalVolume: totalVolumeStr,
         volumeNum: volume,
         timesPerDay: 2,
-        unit: 'mL'
+        unit: 'mL',
+        warning
      });
      
      setExpr(formatResult(volume));
@@ -763,11 +771,28 @@ export default function App() {
                            const newTotalVol = precision(item.volumeNum * item.timesPerDay * dStr);
                            displayTotal = `Tổng ${dStr} ngày: ${formatResult(newTotalVol)} ${item.unit || ''}`;
                         }
-                        return displayTotal ? (
-                           <div className="text-emerald-600 font-bold text-[13px] pt-0.5 bg-emerald-50/50 mt-1 p-1 rounded-md">
-                              {displayTotal}
-                           </div>
-                        ) : null;
+                        
+                        const hasRounded = item.result.includes('*') || (displayTotal || '').includes('*');
+
+                        return (
+                           <>
+                           {displayTotal && (
+                              <div className="text-emerald-600 font-bold text-[13px] pt-0.5 bg-emerald-50/50 mt-1 p-1 rounded-md">
+                                 {displayTotal}
+                              </div>
+                           )}
+                           {item.warning && (
+                              <div className="text-red-500 font-bold text-[12px] pt-1">
+                                 {item.warning}
+                              </div>
+                           )}
+                           {hasRounded && (
+                              <div className="text-slate-400 text-[10px] font-medium pt-1 italic">
+                                 * Kết quả này đã được làm tròn
+                              </div>
+                           )}
+                           </>
+                        );
                      })()}
                   </div>
                 ) : (
@@ -777,6 +802,11 @@ export default function App() {
                        <span className="text-slate-800 font-bold text-lg font-mono pt-1 leading-tight">{item.result}</span>
                        {getFractionText(item.result) && (
                           <span className="text-slate-500 font-bold text-sm -mt-0.5 pointer-events-none">{getFractionText(item.result)}</span>
+                       )}
+                       {item.result.includes('*') && (
+                          <div className="text-slate-400 text-[10px] font-medium pt-1 italic w-full text-right">
+                             * Kết quả này đã được làm tròn
+                          </div>
                        )}
                      </div>
                   </div>

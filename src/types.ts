@@ -24,5 +24,7 @@ export interface HistoryItem {
   unit?: string;
   isMaxDoseLimited?: boolean;
   maxDoseStr?: string;
+  hasRounded?: boolean;
+  warning?: string;
 }
 
