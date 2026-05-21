@@ -994,7 +994,7 @@ export default function App() {
           className="flex items-center gap-1 cursor-pointer opacity-90 hover:opacity-100 transition-opacity text-slate-600"
         >
           <Settings2 className="w-3 h-3" />
-          <span className="text-[11px] font-medium tracking-tight">Cài đặt • Do Tien Son &copy; 2026</span>
+          <span className="text-[11px] font-medium tracking-tight">Cài đặt • Đỗ Tiến Sơn &copy; 2026</span>
         </button>
       </div>
     </div>
