@@ -535,7 +535,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <div className="bg-black h-[100dvh] w-full flex flex-col items-center justify-center font-sans tracking-tight p-0.5 sm:p-2 pt-[max(env(safe-area-inset-top),4px)] pb-[max(env(safe-area-inset-bottom),4px)] overflow-hidden">
+    <div className="fixed inset-0 bg-black flex flex-col items-center justify-center font-sans tracking-tight px-1 sm:p-2 pt-[max(env(safe-area-inset-top),4px)] pb-1 sm:pb-2 overflow-hidden">
       <div className={`${t.app} w-full h-full flex-1 max-h-full sm:max-h-[840px] max-w-md rounded-[2.25rem] sm:rounded-[2.5rem] shadow-[0_0_20px_rgba(255,255,255,0.05)] flex flex-col overflow-hidden relative transition-colors duration-500 border border-[#2a2a2a]`}>
         
         {weightWarning && (
@@ -658,7 +658,7 @@ export default function App() {
           ref={tapeRef}
           className="flex-1 min-h-0 overflow-y-auto flex flex-col custom-scrollbar scroll-smooth relative"
         >
-           <div className="flex-1 p-4 pt-14 pb-6 space-y-3 flex flex-col">
+           <div className="flex-1 px-3 sm:px-4 pt-14 pb-3 space-y-3 flex flex-col">
              {history.length === 0 && (
                 <div className="m-auto text-center text-slate-400 p-6">
                    <CalcIcon className="w-10 h-10 mx-auto mb-3 opacity-20" />
@@ -728,8 +728,8 @@ export default function App() {
         {/* Dynamic Control Area Bottom */}
         <div className="bg-white shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] z-20 flex-shrink-0 relative">
             {/* Calculator Display */}
-            <div className="px-4 pb-3 pt-3 flex flex-col items-end">
-               <div className={`w-full ${isPremium ? 'bg-amber-50/70 border-amber-200/80 border-t-amber-300 shadow-[inset_0_4px_10px_rgba(245,158,11,0.08),0_1px_1px_rgba(255,255,255,1)]' : 'bg-slate-50 border-slate-200/80 border-t-slate-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.06),0_1px_1px_rgba(255,255,255,1)]'} border-t-2 border-b border-x rounded-3xl py-2 px-4`}>
+            <div className="px-3 sm:px-4 pb-2 pt-3 flex flex-col items-end">
+               <div className={`w-full ${isPremium ? 'bg-amber-50/70 border-amber-200/80 border-t-amber-300 shadow-[inset_0_4px_10px_rgba(245,158,11,0.08),0_1px_1px_rgba(255,255,255,1)]' : 'bg-slate-50 border-slate-200/80 border-t-slate-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.06),0_1px_1px_rgba(255,255,255,1)]'} border-t-2 border-b border-x rounded-[1.5rem] py-2 px-3 sm:px-4`}>
                    <div 
                      ref={displayRef}
                      className={`text-[3rem] leading-[1.1] font-black ${t.display} text-right tracking-tighter w-full overflow-x-auto hide-scrollbar whitespace-nowrap pt-1`}
@@ -806,8 +806,8 @@ export default function App() {
               </div>
   
               {/* Keypad */}
-              <div className={`${t.keypad} transition-all duration-500 relative p-4 pb-6 md:pb-4`}>
-                <div className={`grid grid-cols-4 transition-all duration-300 gap-2.5`}>
+              <div className={`${t.keypad} transition-all duration-500 relative px-3 pt-3 sm:p-4 pb-[max(env(safe-area-inset-bottom),16px)] sm:pb-4`}>
+                <div className={`grid grid-cols-4 transition-all duration-300 gap-[7px] sm:gap-2.5`}>
                   <Btn onClick={() => clearAll(false)} className={`bg-red-50 text-red-600 font-black hover:bg-red-100 text-2xl col-span-2`}>AC</Btn>
                   <Btn onClick={handleBackspace} className={`${t.btnAction} font-bold`}><Delete className={"w-7 h-7"} /></Btn>
                   <Btn onClick={() => performOperation('×')} className={`bg-yellow-400 text-yellow-900 hover:bg-yellow-500 shadow-md font-bold pt-1 border border-yellow-500 text-5xl`}>×</Btn>
