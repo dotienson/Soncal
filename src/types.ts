@@ -31,5 +31,6 @@ export interface HistoryItem {
   maxDoseStr?: string;
   hasRounded?: boolean;
   warning?: string;
+  label?: string;
 }
 

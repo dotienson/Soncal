@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Delete, Settings2, Calculator as CalcIcon, Menu, Pill, Crown, Trash2, Info } from 'lucide-react';
+import { Delete, Settings2, Calculator as CalcIcon, Menu, Pill, Crown, Trash2, Info, Tag } from 'lucide-react';
 import { Preset, HistoryItem } from './types';
 import { PresetModal } from './components/PresetModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -32,7 +32,7 @@ const calculateMath = (a: number, b: number, op: string) => {
 const formatResult = (num: number, raw = false) => {
    if (Number.isNaN(num)) return "Sai logic toán";
    if (!isFinite(num)) return String(num);
-   if (raw) return num.toString();
+   if (raw) return parseFloat(num.toFixed(8)).toString();
    if (num % 1 !== 0) {
       const strForm = num.toString();
       if (strForm.includes('e')) {
@@ -46,14 +46,42 @@ const formatResult = (num: number, raw = false) => {
    return num.toString();
 };
 
-const Btn = ({ onClick, className = "", children }: any) => (
-  <button
-    onClick={onClick}
-    className={`active:scale-95 transition-all flex items-center justify-center font-medium shadow-sm select-none rounded-2xl h-[4rem] md:h-16 text-3xl ${className}`}
-  >
-    {children}
-  </button>
-);
+const Btn = ({ onClick, className = "", children }: any) => {
+  const [isActive, setIsActive] = useState(false);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    // Left click or touch only
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    
+    setIsActive(true);
+    onClick();
+    
+    // Prevent default to stop focus and prevent native onClick from firing (avoid double fire)
+    if (e.pointerType === 'touch') {
+      e.preventDefault();
+    }
+  };
+
+  const resetActive = () => setIsActive(false);
+
+  return (
+    <button
+      onPointerDown={handlePointerDown}
+      onPointerUp={resetActive}
+      onPointerLeave={resetActive}
+      onPointerCancel={resetActive}
+      onClick={(e) => {
+         // Fallback for keyboard interactions that trigger click
+         if (e.detail === 0) { // Keyboard triggered click usually has detail 0
+             onClick();
+         }
+      }}
+      className={`${isActive ? 'scale-95' : ''} transition-all flex items-center justify-center font-medium shadow-sm select-none rounded-2xl h-[4rem] md:h-16 text-3xl touch-none ${className}`}
+    >
+      {children}
+    </button>
+  );
+};
 
 function gcd(a: number, b: number): number {
   return b ? gcd(b, a % b) : a;
@@ -249,6 +277,7 @@ export default function App() {
   }, [keepAwake]);
   
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
   const tapeRef = useRef<HTMLDivElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
 
@@ -827,7 +856,40 @@ export default function App() {
              {history.map(item => (
                 item.type === 'preset' ? (
                   <div key={item.id} className="bg-white p-2.5 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] text-right border-l-[4px] border-emerald-500 flex flex-col gap-0.5 animate-in slide-in-from-bottom-2 fade-in duration-200">
-                     <div className="text-emerald-700 text-[10px] font-black uppercase tracking-wide opacity-90">{item.title}</div>
+                     <div className="flex justify-between items-start w-full gap-2 mb-1">
+                        <div className="flex-shrink-0">
+                           {editingLabelId === item.id ? (
+                               <input 
+                                  type="text" 
+                                  autoFocus 
+                                  defaultValue={item.label || ''} 
+                                  onBlur={(e) => {
+                                      const val = e.target.value.trim();
+                                      setHistory(prev => prev.map(h => h.id === item.id ? { ...h, label: val } : h));
+                                      setEditingLabelId(null);
+                                  }}
+                                  onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                          const val = e.currentTarget.value.trim();
+                                          setHistory(prev => prev.map(h => h.id === item.id ? { ...h, label: val } : h));
+                                          setEditingLabelId(null);
+                                      }
+                                  }}
+                                  className="text-[10px] font-bold text-slate-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 outline-none w-24 sm:w-32 placeholder:font-normal placeholder:text-slate-400 text-left"
+                                  placeholder="Nhập nhãn..." 
+                               />
+                           ) : (
+                               <button 
+                                  onClick={() => setEditingLabelId(item.id)}
+                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded border transition-colors flex items-center gap-1 ${item.label ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-slate-500'}`}
+                               >
+                                  <Tag className="w-2.5 h-2.5 flex-shrink-0" />
+                                  <span className="max-w-[80px] sm:max-w-[120px] truncate leading-none pt-[1px]">{item.label || 'Thêm nhãn'}</span>
+                               </button>
+                           )}
+                        </div>
+                        <div className="text-emerald-700 text-[10px] font-black uppercase tracking-wide opacity-90">{item.title}</div>
+                     </div>
                      <div className="text-slate-500 font-mono text-[12px] border-b border-slate-50 pb-1">
                         {Array.isArray(isRoundingEnabled ? item.expression : (item.rawExpression || item.expression)) 
                            ? (isRoundingEnabled ? item.expression : (item.rawExpression || item.expression)).map((line: any, i: number) => <div key={i}>{line}</div>) 
@@ -886,8 +948,41 @@ export default function App() {
                      })()}
                   </div>
                 ) : (
-                  <div key={item.id} className="bg-white p-2.5 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] text-right flex flex-col gap-0.5 border border-slate-100 animate-in slide-in-from-bottom-2 fade-in duration-200">
-                     <div className="text-slate-400 text-[12px] font-mono border-b border-slate-50 pb-1">{Array.isArray(item.expression) ? item.expression.join(' ') : item.expression}</div>
+                  <div key={item.id} className="bg-white p-2.5 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] flex flex-col gap-0.5 border border-slate-100 animate-in slide-in-from-bottom-2 fade-in duration-200">
+                     <div className="flex justify-between items-start w-full gap-2 mb-1">
+                        <div className="flex-shrink-0">
+                           {editingLabelId === item.id ? (
+                               <input 
+                                  type="text" 
+                                  autoFocus 
+                                  defaultValue={item.label || ''} 
+                                  onBlur={(e) => {
+                                      const val = e.target.value.trim();
+                                      setHistory(prev => prev.map(h => h.id === item.id ? { ...h, label: val } : h));
+                                      setEditingLabelId(null);
+                                  }}
+                                  onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                          const val = e.currentTarget.value.trim();
+                                          setHistory(prev => prev.map(h => h.id === item.id ? { ...h, label: val } : h));
+                                          setEditingLabelId(null);
+                                      }
+                                  }}
+                                  className="text-[10px] font-bold text-slate-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 outline-none w-24 sm:w-32 placeholder:font-normal placeholder:text-slate-400 text-left"
+                                  placeholder="Nhập nhãn..." 
+                               />
+                           ) : (
+                               <button 
+                                  onClick={() => setEditingLabelId(item.id)}
+                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded border transition-colors flex items-center gap-1 ${item.label ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-slate-500'}`}
+                               >
+                                  <Tag className="w-2.5 h-2.5 flex-shrink-0" />
+                                  <span className="max-w-[80px] sm:max-w-[120px] truncate leading-none pt-[1px]">{item.label || 'Thêm nhãn'}</span>
+                               </button>
+                           )}
+                        </div>
+                     </div>
+                     <div className="text-slate-400 text-[12px] font-mono border-b border-slate-50 pb-1 text-right">{Array.isArray(item.expression) ? item.expression.join(' ') : item.expression}</div>
                      <div className="flex flex-col items-end">
                        <span className="text-slate-800 font-bold text-lg font-mono pt-1 leading-tight">{isRoundingEnabled ? item.result : (item.rawResult || item.result)}</span>
                        {getFractionText(isRoundingEnabled ? item.result : (item.rawResult || item.result)) && (
