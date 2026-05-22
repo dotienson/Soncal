@@ -29,9 +29,10 @@ const calculateMath = (a: number, b: number, op: string) => {
   }
 };
 
-const formatResult = (num: number) => {
+const formatResult = (num: number, raw = false) => {
    if (Number.isNaN(num)) return "Sai logic toán";
    if (!isFinite(num)) return String(num);
+   if (raw) return num.toString();
    if (num % 1 !== 0) {
       const strForm = num.toString();
       if (strForm.includes('e')) {
@@ -131,6 +132,7 @@ export default function App() {
     return val && ['3', '5', '7'].includes(val) ? val : '7';
   });
 
+  const [isRoundingEnabled, setIsRoundingEnabled] = useState(true);
   const [isDesktopOrTablet, setIsDesktopOrTablet] = useState(false);
 
   useEffect(() => {
@@ -429,9 +431,10 @@ export default function App() {
             id: Date.now().toString(),
             type: 'math',
             expression: expr,
-            result: resultStr
+            result: resultStr,
+            rawResult: formatResult(resultNum, true)
          });
-         setExpr(resultStr);
+         setExpr(isRoundingEnabled ? resultStr : formatResult(resultNum, true));
          setIsResult(true);
       } catch(e) {
          setExpr('Sai logic toán');
@@ -449,6 +452,7 @@ export default function App() {
     setIsResult(false);
     setWeightStr('');
     setDaysStr('7');
+    setIsRoundingEnabled(true);
     if (clearHist === true) {
        setHistory([]);
     }
@@ -525,6 +529,7 @@ export default function App() {
      
      let resultStr = `${formatResult(volume)} mL (${formatResult(doseMg)} mg) mỗi lần × 2 lần/ngày`;
      let totalVolumeStr = '';
+     let rawTotalVolumeStr = '';
      
      setDaysStr('5');
      const dStr = 5;
@@ -532,6 +537,7 @@ export default function App() {
      if (!isNaN(dStr) && dStr > 0) {
          const totalVol = precision(volume * 2 * dStr);
          totalVolumeStr = `Tổng ${dStr} ngày: ${formatResult(totalVol)} mL`;
+         rawTotalVolumeStr = `Tổng ${dStr} ngày: ${formatResult(totalVol, true)} mL`;
      }
      
      addHistory({
@@ -539,15 +545,18 @@ export default function App() {
         type: 'preset',
         title: `Oseltamivir (Cân: ${w} kg)`,
         expression: [`• Cách 1 viên (75mg) pha 15 mL nước`, `• Lấy liều: ${note}`],
+        rawExpression: [`• Cách 1 viên (75mg) pha 15 mL nước`, `• Lấy liều: ${note}`],
         result: resultStr,
+        rawResult: `${formatResult(volume, true)} mL (${formatResult(doseMg, true)} mg) mỗi lần × 2 lần/ngày`,
         totalVolume: totalVolumeStr,
+        rawTotalVolume: rawTotalVolumeStr,
         volumeNum: volume,
         timesPerDay: 2,
         unit: 'mL',
         warning
      });
      
-     setExpr(formatResult(volume));
+     setExpr(isRoundingEnabled ? formatResult(volume) : formatResult(volume, true));
      setExprIsMl(true);
      setIsResult(true);
   };
@@ -574,12 +583,15 @@ export default function App() {
      const volume = formatResult(volumeNum);
      
      let step1Str = `• ${w} kg × ${preset.dosePerKg} mg = ${formatResult(precision(w * (preset.dosePerKg || 0)))} mg`;
+     let rawStep1Str = `• ${w} kg × ${preset.dosePerKg} mg = ${formatResult(precision(w * (preset.dosePerKg || 0)), true)} mg`;
      if (isMaxDoseLimited) {
          step1Str += ` → Giới hạn ${preset.maxDoseMg} mg`;
+         rawStep1Str += ` → Giới hạn ${preset.maxDoseMg} mg`;
      }
      
      const divStr = (!preset.isSolid && cMl !== 1) ? ` × ${cMl}` : '';
      const step2Str = `• ${formatResult(totalDose)} mg : ${cMg}${divStr} = ${volume} ${preset.unit}`;
+     const rawStep2Str = `• ${formatResult(totalDose, true)} mg : ${cMg}${divStr} = ${formatResult(volumeNum, true)} ${preset.unit}`;
      
      let fractionPart: string | number = volume;
      const fracText = getFractionText(String(volumeNum));
@@ -589,17 +601,25 @@ export default function App() {
         ? `${formatResult(totalDose)} mg (${fractionPart} ${preset.unit})`
         : `${volume} ${preset.unit}`;
         
+     let rawResultStr = preset.isSolid
+        ? `${formatResult(totalDose, true)} mg (${fractionPart} ${preset.unit})`
+        : `${formatResult(volumeNum, true)} ${preset.unit}`;
+        
      let totalVolumeStr = '';
+     let rawTotalVolumeStr = '';
      const dStr = parseFloat(daysStr);
      
      if (preset.timesPerDay && preset.timesPerDay > 0) {
         resultStr += ` (${preset.timesPerDay} lần/ngày)`;
+        rawResultStr += ` (${preset.timesPerDay} lần/ngày)`;
         if (!isNaN(dStr) && dStr > 0) {
             const totalVol = precision(volumeNum * preset.timesPerDay * dStr);
             totalVolumeStr = `Tổng ${dStr} ngày: ${formatResult(totalVol)} ${preset.unit}`;
+            rawTotalVolumeStr = `Tổng ${dStr} ngày: ${formatResult(totalVol, true)} ${preset.unit}`;
             if (preset.bottleVolume && preset.bottleVolume > 0) {
                 const bottles = Math.ceil(totalVol / preset.bottleVolume);
                 totalVolumeStr += ` (${preset.bottleVolume}${preset.unit}/lọ - ${bottles} lọ)`;
+                rawTotalVolumeStr += ` (${preset.bottleVolume}${preset.unit}/lọ - ${bottles} lọ)`;
             }
         }
      }
@@ -609,8 +629,11 @@ export default function App() {
         type: 'preset',
         title: `${preset.name} (Cân: ${w} kg)`,
         expression: [step1Str, step2Str],
+        rawExpression: [rawStep1Str, rawStep2Str],
         result: resultStr,
+        rawResult: rawResultStr,
         totalVolume: totalVolumeStr,
+        rawTotalVolume: rawTotalVolumeStr,
         volumeNum: volumeNum,
         timesPerDay: preset.timesPerDay,
         unit: preset.unit,
@@ -619,7 +642,7 @@ export default function App() {
         maxDoseStr
      });
      
-     setExpr(String(volume));
+     setExpr(isRoundingEnabled ? String(volume) : formatResult(volumeNum, true));
      setExprIsMl(!preset.isSolid && preset.unit === 'mL');
      setIsResult(true);
   };
@@ -806,33 +829,35 @@ export default function App() {
                   <div key={item.id} className="bg-white p-2.5 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] text-right border-l-[4px] border-emerald-500 flex flex-col gap-0.5 animate-in slide-in-from-bottom-2 fade-in duration-200">
                      <div className="text-emerald-700 text-[10px] font-black uppercase tracking-wide opacity-90">{item.title}</div>
                      <div className="text-slate-500 font-mono text-[12px] border-b border-slate-50 pb-1">
-                        {Array.isArray(item.expression) ? item.expression.map((line, i) => <div key={i}>{line}</div>) : item.expression}
+                        {Array.isArray(isRoundingEnabled ? item.expression : (item.rawExpression || item.expression)) 
+                           ? (isRoundingEnabled ? item.expression : (item.rawExpression || item.expression)).map((line: any, i: number) => <div key={i}>{line}</div>) 
+                           : (isRoundingEnabled ? item.expression : (item.rawExpression || item.expression))}
                      </div>
                      <div className="text-slate-900 font-bold text-[17px] leading-tight pt-1">
-                        {item.result}
+                        {isRoundingEnabled ? item.result : (item.rawResult || item.result)}
                         {item.isMaxDoseLimited && (
                            <span className="inline-flex items-center gap-1 ml-2 text-[12px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 align-text-bottom">
                              <span className="text-[14px] leading-none -mt-[1px]">⚠️</span>
                              {item.maxDoseStr}
                            </span>
                         )}
-                        {item.volumeNum !== undefined && getFractionText(String(item.volumeNum)) && !item.result.includes('/') && (
+                        {item.volumeNum !== undefined && getFractionText(String(item.volumeNum)) && !(isRoundingEnabled ? item.result : (item.rawResult || item.result)).includes('/') && (
                            <span className="text-slate-500 ml-1 text-sm">{getFractionText(String(item.volumeNum))}</span>
                         )}
                      </div>
                      {(() => {
-                        let displayTotal = item.totalVolume;
+                        let displayTotal = isRoundingEnabled ? item.totalVolume : (item.rawTotalVolume || item.totalVolume);
                         const dStr = parseFloat(daysStr);
                         if (item.volumeNum && item.timesPerDay && !isNaN(dStr) && dStr > 0) {
                            const newTotalVol = precision(item.volumeNum * item.timesPerDay * dStr);
-                           displayTotal = `Tổng ${dStr} ngày: ${formatResult(newTotalVol)} ${item.unit || ''}`;
+                           displayTotal = `Tổng ${dStr} ngày: ${formatResult(newTotalVol, !isRoundingEnabled)} ${item.unit || ''}`;
                            if (item.bottleVolume && item.bottleVolume > 0) {
                                const bottles = Math.ceil(newTotalVol / item.bottleVolume);
                                displayTotal += ` (${item.bottleVolume}${item.unit || ''}/lọ - ${bottles} lọ)`;
                            }
                         }
                         
-                        const hasRounded = item.result.includes('*') || (displayTotal || '').includes('*');
+                        const hasRounded = item.result.includes('*') || (item.totalVolume || '').includes('*') || (displayTotal || '').includes('*');
 
                         return (
                            <>
@@ -847,8 +872,13 @@ export default function App() {
                               </div>
                            )}
                            {hasRounded && (
-                              <div className="text-slate-400 text-[10px] font-medium pt-1 italic">
-                                 * Kết quả này đã được làm tròn
+                              <div className="flex items-center justify-end gap-1.5 pt-1 mt-1">
+                                 <div className="text-slate-400 text-[10px] font-medium italic">
+                                    * {isRoundingEnabled ? "Kết quả này đã được làm tròn" : "Hiển thị số thập phân gốc"}
+                                 </div>
+                                 <button onClick={() => setIsRoundingEnabled(!isRoundingEnabled)} className={`w-7 h-4 rounded-full flex items-center p-0.5 shadow-inner transition-colors ${isRoundingEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                    <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-transform ${isRoundingEnabled ? 'translate-x-3' : 'translate-x-0'}`} />
+                                 </button>
                               </div>
                            )}
                            </>
@@ -859,13 +889,18 @@ export default function App() {
                   <div key={item.id} className="bg-white p-2.5 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] text-right flex flex-col gap-0.5 border border-slate-100 animate-in slide-in-from-bottom-2 fade-in duration-200">
                      <div className="text-slate-400 text-[12px] font-mono border-b border-slate-50 pb-1">{Array.isArray(item.expression) ? item.expression.join(' ') : item.expression}</div>
                      <div className="flex flex-col items-end">
-                       <span className="text-slate-800 font-bold text-lg font-mono pt-1 leading-tight">{item.result}</span>
-                       {getFractionText(item.result) && (
-                          <span className="text-slate-500 font-bold text-sm -mt-0.5 pointer-events-none">{getFractionText(item.result)}</span>
+                       <span className="text-slate-800 font-bold text-lg font-mono pt-1 leading-tight">{isRoundingEnabled ? item.result : (item.rawResult || item.result)}</span>
+                       {getFractionText(isRoundingEnabled ? item.result : (item.rawResult || item.result)) && (
+                          <span className="text-slate-500 font-bold text-sm -mt-0.5 pointer-events-none">{getFractionText(isRoundingEnabled ? item.result : (item.rawResult || item.result))}</span>
                        )}
                        {item.result.includes('*') && (
-                          <div className="text-slate-400 text-[10px] font-medium pt-1 italic w-full text-right">
-                             * Kết quả này đã được làm tròn
+                          <div className="flex items-center justify-end w-full gap-1.5 pt-1">
+                             <div className="text-slate-400 text-[10px] font-medium italic text-right">
+                                * {isRoundingEnabled ? "Kết quả này đã được làm tròn" : "Hiển thị gốc"}
+                             </div>
+                             <button onClick={() => setIsRoundingEnabled(!isRoundingEnabled)} className={`w-7 h-4 rounded-full flex items-center p-0.5 shadow-inner transition-colors ${isRoundingEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                <div className={`w-3 h-3 rounded-full bg-white shadow-sm transition-transform ${isRoundingEnabled ? 'translate-x-3' : 'translate-x-0'}`} />
+                             </button>
                           </div>
                        )}
                      </div>

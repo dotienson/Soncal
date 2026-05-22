@@ -18,8 +18,11 @@ export interface HistoryItem {
   type: 'math' | 'preset';
   title?: string;
   expression: string | string[];
+  rawExpression?: string | string[];
   result: string;
+  rawResult?: string;
   totalVolume?: string;
+  rawTotalVolume?: string;
   volumeNum?: number;
   timesPerDay?: number;
   unit?: string;
