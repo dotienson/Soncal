@@ -29,6 +29,16 @@ const calculateMath = (a: number, b: number, op: string) => {
   }
 };
 
+const formatWithThousandSeparator = (str: string | number | undefined) => {
+    if (str === null || str === undefined) return '';
+    const s = String(str);
+    if (s === 'Sai logic toán' || s === 'NaN' || s === 'Infinity') return s;
+    return s.replace(/\b([0-9]+)(\.[0-9]+)?\b/g, (match, intPart, decPart) => {
+        const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return decPart ? `${formattedInt}${decPart}` : formattedInt;
+    });
+};
+
 const formatResult = (num: number, raw = false) => {
    if (Number.isNaN(num)) return "Sai logic toán";
    if (!isFinite(num)) return String(num);
@@ -343,7 +353,11 @@ export default function App() {
   };
 
   const renderColoredExpression = (expression: string) => {
-     return expression.split('').map((char, i) => {
+     const formattedStr = formatWithThousandSeparator(expression);
+     return formattedStr.split('').map((char, i) => {
+        if (char === ',') {
+            return <span key={i} className="text-[0.6em] ml-[1px] mr-[2px] opacity-70">,</span>; // Make comma look nice
+        }
         if (['+', '-', '×', ':'].includes(char)) {
             if (i === expression.length - 1) {
                 return <span key={i} className="inline-flex items-center justify-center bg-slate-800 text-white shadow-inner text-[0.3em] align-top ml-[4px] mt-[10px] font-black w-[1.3em] h-[1.3em] rounded-[4px] pb-[1px]">{char}</span>;
@@ -892,11 +906,11 @@ export default function App() {
                      </div>
                      <div className="text-slate-500 font-mono text-[12px] border-b border-slate-50 pb-1">
                         {Array.isArray(isRoundingEnabled ? item.expression : (item.rawExpression || item.expression)) 
-                           ? (isRoundingEnabled ? item.expression : (item.rawExpression || item.expression)).map((line: any, i: number) => <div key={i}>{line}</div>) 
-                           : (isRoundingEnabled ? item.expression : (item.rawExpression || item.expression))}
+                           ? (isRoundingEnabled ? item.expression : (item.rawExpression || item.expression)).map((line: any, i: number) => <div key={i}>{formatWithThousandSeparator(line)}</div>) 
+                           : formatWithThousandSeparator(isRoundingEnabled ? item.expression : (item.rawExpression || item.expression) as string)}
                      </div>
                      <div className="text-slate-900 font-bold text-[17px] leading-tight pt-1">
-                        {isRoundingEnabled ? item.result : (item.rawResult || item.result)}
+                        {formatWithThousandSeparator(isRoundingEnabled ? item.result : (item.rawResult || item.result))}
                         {item.isMaxDoseLimited && (
                            <span className="inline-flex items-center gap-1 ml-2 text-[12px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 align-text-bottom">
                              <span className="text-[14px] leading-none -mt-[1px]">⚠️</span>
@@ -925,7 +939,7 @@ export default function App() {
                            <>
                            {displayTotal && (
                               <div className="text-emerald-600 font-bold text-[13px] pt-0.5 bg-emerald-50/50 mt-1 p-1 rounded-md">
-                                 {displayTotal}
+                                 {formatWithThousandSeparator(displayTotal)}
                               </div>
                            )}
                            {item.warning && (
@@ -982,9 +996,9 @@ export default function App() {
                            )}
                         </div>
                      </div>
-                     <div className="text-slate-400 text-[12px] font-mono border-b border-slate-50 pb-1 text-right">{Array.isArray(item.expression) ? item.expression.join(' ') : item.expression}</div>
+                     <div className="text-slate-400 text-[12px] font-mono border-b border-slate-50 pb-1 text-right">{formatWithThousandSeparator(Array.isArray(item.expression) ? (item.expression as any).join(' ') : item.expression as string)}</div>
                      <div className="flex flex-col items-end">
-                       <span className="text-slate-800 font-bold text-lg font-mono pt-1 leading-tight">{isRoundingEnabled ? item.result : (item.rawResult || item.result)}</span>
+                       <span className="text-slate-800 font-bold text-lg font-mono pt-1 leading-tight">{formatWithThousandSeparator(isRoundingEnabled ? item.result : (item.rawResult || item.result))}</span>
                        {getFractionText(isRoundingEnabled ? item.result : (item.rawResult || item.result)) && (
                           <span className="text-slate-500 font-bold text-sm -mt-0.5 pointer-events-none">{getFractionText(isRoundingEnabled ? item.result : (item.rawResult || item.result))}</span>
                        )}
