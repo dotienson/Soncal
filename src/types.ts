@@ -11,6 +11,7 @@ export interface Preset {
   isSolid?: boolean;
   color?: string;
   maxDoseMg?: number;
+  note?: string;
 }
 
 export interface HistoryItem {
@@ -32,5 +33,6 @@ export interface HistoryItem {
   hasRounded?: boolean;
   warning?: string;
   label?: string;
+  note?: string;
 }
 

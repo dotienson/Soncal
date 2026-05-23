@@ -24,6 +24,7 @@ export function PresetModal({
   const [color, setColor] = useState('');
   const [maxDoseMg, setMaxDoseMg] = useState('');
   const [bottleVolume, setBottleVolume] = useState('');
+  const [note, setNote] = useState('');
 
   const PRESET_COLORS = [
     { value: '', label: 'Mặc định (Trắng)', bg: 'bg-white', border: 'border-slate-200' },
@@ -57,6 +58,7 @@ export function PresetModal({
       setColor(initialData.color || '');
       setMaxDoseMg(initialData.maxDoseMg?.toString() || '');
       setBottleVolume(initialData.bottleVolume?.toString() || '');
+      setNote(initialData.note || '');
     } else {
       setName('');
       setDosePerKg('15');
@@ -68,6 +70,7 @@ export function PresetModal({
       setColor('');
       setMaxDoseMg('');
       setBottleVolume('');
+      setNote('');
     }
   }, [initialData, isOpen]);
 
@@ -109,7 +112,8 @@ export function PresetModal({
       unit: unit.trim() || (isSolid ? 'gói' : 'mL'),
       isSolid,
       color,
-      maxDoseMg: maxD
+      maxDoseMg: maxD,
+      note: note.trim()
     });
   };
 
@@ -229,6 +233,17 @@ export function PresetModal({
                onChange={handleNumChange(setBottleVolume)} 
                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-mono font-bold text-slate-700 placeholder:text-slate-300" 
                placeholder="VD: 60, 100..."
+             />
+          </div>
+
+          <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Ghi chú <span className="text-slate-400 font-normal normal-case">(Tùy chọn)</span></label>
+             <input 
+               type="text" 
+               value={note} 
+               onChange={e => setNote(e.target.value)} 
+               className="w-full border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-medium text-slate-700 placeholder:text-slate-300" 
+               placeholder="VD: Dặn dò bênh nhân, cách bảo quản..."
              />
           </div>
 

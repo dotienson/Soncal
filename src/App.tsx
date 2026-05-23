@@ -236,11 +236,11 @@ export default function App() {
       try {
         if (keepAwake && mounted && document.visibilityState === 'visible') {
            if (!noSleepInstance.isEnabled) {
-              await noSleepInstance.enable();
+              await noSleepInstance.enable().catch(() => {});
            }
         }
       } catch (err: any) {
-        console.log(`${err.name}, ${err.message}`);
+        // Silently ignore wake lock errors
       }
     };
     
@@ -537,7 +537,7 @@ export default function App() {
      executePreset(w, preset);
   };
 
-  const executeTamiflu = (w: number, isUnderOne: boolean) => {
+  const executeTamiflu = (w: number, isUnderOne: boolean, presetObj?: Preset) => {
      let doseMg = 0;
      let volume = 0;
      let note = '';
@@ -595,7 +595,7 @@ export default function App() {
         rawTotalVolume: rawTotalVolumeStr,
         volumeNum: volume,
         timesPerDay: 2,
-        unit: 'mL',
+        unit: 'mL', note: presetObj?.note,
         warning
      });
      
@@ -606,7 +606,7 @@ export default function App() {
 
   const executePreset = (w: number, preset: Preset) => {
      if (preset.id === 'tamiflu') {
-         executeTamiflu(w, false); // For w >= 15, we don't need age so false is fine
+         executeTamiflu(w, false, preset); // For w >= 15, we don't need age so false is fine
          return;
      }
 
@@ -682,7 +682,7 @@ export default function App() {
         unit: preset.unit,
         bottleVolume: preset.bottleVolume,
         isMaxDoseLimited,
-        maxDoseStr
+        maxDoseStr, note: preset.note
      });
      
      setExpr(isRoundingEnabled ? String(volume) : formatResult(volumeNum, true));
@@ -921,6 +921,11 @@ export default function App() {
                            <span className="text-slate-500 ml-1 text-sm">{getFractionText(String(item.volumeNum))}</span>
                         )}
                      </div>
+                     {item.note && (
+                        <div className="text-red-500 font-bold text-[13px] pt-1 mt-0.5 border-t border-slate-50/50">
+                           Ghi chú: {item.note}
+                        </div>
+                     )}
                      {(() => {
                         let displayTotal = isRoundingEnabled ? item.totalVolume : (item.rawTotalVolume || item.totalVolume);
                         const dStr = parseFloat(daysStr);
