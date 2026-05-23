@@ -21,6 +21,7 @@ export function PresetModal({
   const [concentrationMg, setConcentrationMg] = useState("250");
   const [concentrationMl, setConcentrationMl] = useState("5");
   const [timesPerDay, setTimesPerDay] = useState("3");
+  const [isNaTimesPerDay, setIsNaTimesPerDay] = useState(false);
   const [unit, setUnit] = useState("mL");
   const [isSolid, setIsSolid] = useState(false);
   const [color, setColor] = useState("");
@@ -91,6 +92,7 @@ export function PresetModal({
       setConcentrationMg(initialData.concentrationMg?.toString() || "250");
       setConcentrationMl(initialData.concentrationMl?.toString() || "5");
       setTimesPerDay(initialData.timesPerDay?.toString() || "3");
+      setIsNaTimesPerDay(initialData.timesPerDay === 0);
       setUnit(initialData.unit || "mL");
       setIsSolid(initialData.isSolid || false);
       setColor(initialData.color || "");
@@ -104,6 +106,7 @@ export function PresetModal({
       setConcentrationMg("250");
       setConcentrationMl("5");
       setTimesPerDay("3");
+      setIsNaTimesPerDay(false);
       setUnit("mL");
       setIsSolid(false);
       setColor("");
@@ -124,7 +127,7 @@ export function PresetModal({
     const dPkg = parseFloat(dosePerKg);
     const cMg = parseFloat(concentrationMg);
     const cMl = isSolid ? 1 : parseFloat(concentrationMl);
-    const tPd = parseFloat(timesPerDay) || 1;
+    const tPd = isNaTimesPerDay ? 0 : parseFloat(timesPerDay) || 1;
     const maxD = maxDoseMg.trim() === "" ? undefined : parseFloat(maxDoseMg);
     const bVol =
       bottleVolume.trim() === "" ? undefined : parseFloat(bottleVolume);
@@ -246,7 +249,9 @@ export function PresetModal({
                 <div className="flex justify-between border-b border-slate-100 pb-2">
                   <span className="text-slate-500 text-sm">Số lần/ngày:</span>
                   <span className="font-bold text-slate-800 text-sm text-right">
-                    {pendingSaveData.timesPerDay} lần
+                    {pendingSaveData.timesPerDay === 0
+                      ? "NA"
+                      : `${pendingSaveData.timesPerDay} lần`}
                   </span>
                 </div>
                 {pendingSaveData.note && (
@@ -341,15 +346,29 @@ export function PresetModal({
                 </div>
 
                 <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                  <label className="block text-[9.5px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Lần / ngày
-                  </label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="block text-[9.5px] font-bold text-slate-500 uppercase tracking-wider">
+                      Lần / ngày
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isNaTimesPerDay}
+                        onChange={(e) => setIsNaTimesPerDay(e.target.checked)}
+                        className="w-3 h-3 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                      />
+                      <span className="text-[9.5px] font-bold text-slate-500 uppercase">
+                        NA
+                      </span>
+                    </label>
+                  </div>
                   <input
                     type="text"
                     inputMode="decimal"
-                    value={timesPerDay}
+                    disabled={isNaTimesPerDay}
+                    value={isNaTimesPerDay ? "" : timesPerDay}
                     onChange={handleNumChange(setTimesPerDay)}
-                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-slate-400/20 outline-none font-mono font-bold text-slate-700"
+                    className={`w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm outline-none font-mono font-bold text-slate-700 ${isNaTimesPerDay ? "opacity-50 cursor-not-allowed bg-slate-100" : "focus:ring-2 focus:ring-slate-400/20"}`}
                   />
                 </div>
               </div>
