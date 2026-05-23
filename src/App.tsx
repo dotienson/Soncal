@@ -8,9 +8,7 @@ import { Delete, Settings2, Calculator as CalcIcon, Menu, Pill, Crown, Trash2, I
 import { Preset, HistoryItem } from './types';
 import { PresetModal } from './components/PresetModal';
 import { SettingsModal } from './components/SettingsModal';
-import NoSleep from 'nosleep.js';
-
-let noSleepInstance: any = null;
+let nativeWakeLock: any = null;
 
 const DEFAULT_PRESETS: Preset[] = [
   { id: 'aug600', name: 'Aug 600', dosePerKg: 45, concentrationMg: 600, concentrationMl: 5, timesPerDay: 2, unit: 'mL' },
@@ -228,26 +226,26 @@ export default function App() {
   useEffect(() => {
     let mounted = true;
 
-    if (!noSleepInstance) {
-       noSleepInstance = new NoSleep();
-    }
-
     const requestWakeLock = async () => {
       try {
-        if (keepAwake && mounted && document.visibilityState === 'visible') {
-           if (!noSleepInstance.isEnabled) {
-              await noSleepInstance.enable().catch(() => {});
+        if (keepAwake && mounted && document.visibilityState === 'visible' && 'wakeLock' in navigator) {
+           if (!nativeWakeLock) {
+              nativeWakeLock = await (navigator as any).wakeLock.request('screen');
+              nativeWakeLock.addEventListener('release', () => {
+                 nativeWakeLock = null;
+              });
            }
         }
       } catch (err: any) {
-        // Silently ignore wake lock errors
+        // Silently ignore
       }
     };
     
     const releaseWakeLock = () => {
       try {
-         if (noSleepInstance && noSleepInstance.isEnabled) {
-            noSleepInstance.disable();
+         if (nativeWakeLock) {
+            nativeWakeLock.release();
+            nativeWakeLock = null;
          }
       } catch (err) {}
     };
@@ -268,7 +266,7 @@ export default function App() {
     
     // Some browsers need explicit user interaction to start media playback
     const enableOnInteraction = () => {
-       if (keepAwake && !noSleepInstance.isEnabled) {
+       if (keepAwake && !nativeWakeLock) {
           requestWakeLock();
        }
     };
