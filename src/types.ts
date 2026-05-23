@@ -7,6 +7,7 @@ export interface Preset {
   timesPerDay?: number;
   bottleVolume?: number;
   unit?: string;
+  doseUnit?: string;
   isSpecial?: boolean;
   isSolid?: boolean;
   color?: string;

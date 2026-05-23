@@ -202,7 +202,7 @@ export default function App() {
   const [premiumCode, setPremiumCode] = useState('');
   const [premiumError, setPremiumError] = useState(false);
 
-  const [askPinModalType, setAskPinModalType] = useState<'create'|'verify_edit'|'verify_setting'|null>(null);
+  const [askPinModalType, setAskPinModalType] = useState<'create'|'verify_edit'|'verify_setting'|'change_pin'|null>(null);
   const [secretPin, setSecretPin] = useState<string>(() => localStorage.getItem('medCalc_secretPin') || '');
   const [hasPromptedPin, setHasPromptedPin] = useState<boolean>(() => localStorage.getItem('medCalc_hasPromptedPin') === 'true');
   const [pendingAction, setPendingAction] = useState<(()=>void)|null>(null);
@@ -634,6 +634,7 @@ export default function App() {
          return;
      }
 
+     let unitStr = preset.doseUnit || 'mg';
      let totalDose = precision(w * (preset.dosePerKg || 0));
      let isMaxDoseLimited = false;
      let maxDoseStr = '';
@@ -641,7 +642,7 @@ export default function App() {
      if (preset.maxDoseMg && totalDose > preset.maxDoseMg) {
         totalDose = preset.maxDoseMg;
         isMaxDoseLimited = true;
-        maxDoseStr = `Liều tối đa ${preset.maxDoseMg}mg/lần`;
+        maxDoseStr = `Liều tối đa ${preset.maxDoseMg} ${unitStr}/lần`;
      }
 
      const cMg = preset.concentrationMg || 1;
@@ -649,27 +650,27 @@ export default function App() {
      const volumeNum = precision((totalDose * cMl) / cMg);
      const volume = formatResult(volumeNum);
      
-     let step1Str = `• ${w} kg × ${preset.dosePerKg} mg = ${formatResult(precision(w * (preset.dosePerKg || 0)))} mg`;
-     let rawStep1Str = `• ${w} kg × ${preset.dosePerKg} mg = ${formatResult(precision(w * (preset.dosePerKg || 0)), true)} mg`;
+     let step1Str = `• ${w} kg × ${preset.dosePerKg} ${unitStr} = ${formatResult(precision(w * (preset.dosePerKg || 0)))} ${unitStr}`;
+     let rawStep1Str = `• ${w} kg × ${preset.dosePerKg} ${unitStr} = ${formatResult(precision(w * (preset.dosePerKg || 0)), true)} ${unitStr}`;
      if (isMaxDoseLimited) {
-         step1Str += ` → Giới hạn ${preset.maxDoseMg} mg`;
-         rawStep1Str += ` → Giới hạn ${preset.maxDoseMg} mg`;
+         step1Str += ` → Giới hạn ${preset.maxDoseMg} ${unitStr}`;
+         rawStep1Str += ` → Giới hạn ${preset.maxDoseMg} ${unitStr}`;
      }
      
      const divStr = (!preset.isSolid && cMl !== 1) ? ` × ${cMl}` : '';
-     const step2Str = `• ${formatResult(totalDose)} mg : ${cMg}${divStr} = ${volume} ${preset.unit}`;
-     const rawStep2Str = `• ${formatResult(totalDose, true)} mg : ${cMg}${divStr} = ${formatResult(volumeNum, true)} ${preset.unit}`;
+     const step2Str = `• ${formatResult(totalDose)} ${unitStr} : ${cMg}${divStr} = ${volume} ${preset.unit}`;
+     const rawStep2Str = `• ${formatResult(totalDose, true)} ${unitStr} : ${cMg}${divStr} = ${formatResult(volumeNum, true)} ${preset.unit}`;
      
      let fractionPart: string | number = volume;
      const fracText = getFractionText(String(volumeNum));
      if (fracText) fractionPart = fracText.split(' (')[0].replace('~ ', '');
 
      let resultStr = preset.isSolid 
-        ? `${formatResult(totalDose)} mg (${fractionPart} ${preset.unit})`
+        ? `${formatResult(totalDose)} ${unitStr} (${fractionPart} ${preset.unit})`
         : `${volume} ${preset.unit}`;
         
      let rawResultStr = preset.isSolid
-        ? `${formatResult(totalDose, true)} mg (${fractionPart} ${preset.unit})`
+        ? `${formatResult(totalDose, true)} ${unitStr} (${fractionPart} ${preset.unit})`
         : `${formatResult(volumeNum, true)} ${preset.unit}`;
         
      let totalVolumeStr = '';
@@ -1166,7 +1167,7 @@ export default function App() {
          isPremium={isPremium}
          onRequirePremium={() => setPremiumModalOpen(true)}
          secretPin={secretPin}
-         onChangePin={() => setAskPinModalType('create')}
+         onChangePin={() => setAskPinModalType(secretPin ? 'change_pin' : 'create')}
       />
 
       {premiumModalOpen && (
@@ -1230,7 +1231,7 @@ export default function App() {
 
       <PinModal 
         isOpen={askPinModalType !== null}
-        type={askPinModalType === 'create' ? 'setup' : 'verify'}
+        type={askPinModalType === 'create' ? 'setup' : askPinModalType === 'change_pin' ? 'change' : 'verify'}
         currentPin={secretPin}
         onClose={() => {
            if (askPinModalType === 'create') {
@@ -1241,7 +1242,7 @@ export default function App() {
            setPendingAction(null);
         }}
         onSuccess={(pin) => {
-           if (askPinModalType === 'create') {
+           if (askPinModalType === 'create' || askPinModalType === 'change_pin') {
               setSecretPin(pin);
               localStorage.setItem('medCalc_secretPin', pin);
               setHasPromptedPin(true);
@@ -1252,6 +1253,13 @@ export default function App() {
              pendingAction();
              setPendingAction(null);
            }
+        }}
+        onForgotPin={() => {
+           setPresets(prev => prev.filter(p => p.id === 'tamiflu'));
+           setSecretPin('');
+           localStorage.removeItem('medCalc_secretPin');
+           setAskPinModalType(null);
+           setPendingAction(null);
         }}
       />
 

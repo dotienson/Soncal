@@ -7,23 +7,31 @@ export function PinModal({
   type,
   onClose,
   onSuccess,
+  onForgotPin,
   currentPin
 }: {
   isOpen: boolean;
-  type: 'setup' | 'verify';
+  type: 'setup' | 'verify' | 'change';
   onClose: () => void;
   onSuccess: (pin: string) => void;
+  onForgotPin?: () => void;
   currentPin?: string;
 }) {
   const [pin, setPin] = useState('');
+  const [oldPin, setOldPin] = useState('');
   const [error, setError] = useState(false);
+  const [step, setStep] = useState<'old' | 'new'>('old'); // For change type
+  const [showForgotConfirm, setShowForgotConfirm] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setPin('');
+      setOldPin('');
       setError(false);
+      setShowForgotConfirm(false);
+      setStep(type === 'change' ? 'old' : 'new');
     }
-  }, [isOpen]);
+  }, [isOpen, type]);
 
   if (!isOpen) return null;
 
@@ -35,11 +43,27 @@ export function PinModal({
         return;
       }
       onSuccess(pin);
-    } else {
+    } else if (type === 'verify') {
       if (pin === currentPin) {
         onSuccess(pin);
       } else {
         setError(true);
+      }
+    } else if (type === 'change') {
+      if (step === 'old') {
+        if (pin === currentPin) {
+          setStep('new');
+          setPin('');
+          setError(false);
+        } else {
+          setError(true);
+        }
+      } else {
+        if (pin.length < 4) {
+          setError(true);
+          return;
+        }
+        onSuccess(pin);
       }
     }
   };
@@ -64,8 +88,8 @@ export function PinModal({
         >
           <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
              <div className="flex items-center gap-2 text-slate-800 font-bold">
-               {type === 'setup' ? <ShieldAlert className="w-5 h-5 text-amber-500" /> : <Lock className="w-5 h-5 text-blue-500" />}
-               {type === 'setup' ? 'Bảo vệ thiết lập' : 'Nhập mã bảo vệ'}
+               {type === 'setup' || type === 'change' ? <ShieldAlert className="w-5 h-5 text-amber-500" /> : <Lock className="w-5 h-5 text-blue-500" />}
+               {type === 'setup' ? 'Bảo vệ thiết lập' : type === 'change' ? 'Đổi mã bảo vệ' : 'Nhập mã bảo vệ'}
              </div>
              <button onClick={onClose} className="text-slate-400 hover:text-slate-600 bg-slate-200/50 hover:bg-slate-200 w-7 h-7 rounded-full flex items-center justify-center">
                <X className="w-4 h-4" />
@@ -81,7 +105,9 @@ export function PinModal({
              
              <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">
-                  {type === 'setup' ? 'Nhập mã PIN mới (ít nhất 4 số)' : 'Nhập mã PIN của bạn'}
+                  {type === 'setup' ? 'Nhập mã PIN mới (ít nhất 4 số)' : 
+                   type === 'verify' ? 'Nhập mã PIN của bạn' :
+                   step === 'old' ? 'Nhập mã PIN hiện tại' : 'Nhập mã PIN mới (ít nhất 4 số)'}
                 </label>
                 <input 
                   type="password"
@@ -98,17 +124,61 @@ export function PinModal({
                 />
                 {error && (
                   <p className="text-red-500 text-xs mt-1 text-center font-medium">
-                    {type === 'setup' ? 'Mã PIN phải có ít nhất 4 số' : 'Mã PIN không chính xác'}
+                    {type === 'setup' || (type === 'change' && step === 'new') ? 'Mã PIN phải có ít nhất 4 số' : 'Mã PIN không chính xác'}
                   </p>
                 )}
              </div>
              
              <button 
                type="submit"
-               className={`w-full font-bold py-3 rounded-xl text-white shadow-md transition-transform active:scale-95 ${type === 'setup' ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-200' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'}`}
+               className={`w-full font-bold py-3 rounded-xl text-white shadow-md transition-transform active:scale-95 ${type === 'setup' || (type === 'change' && step === 'new') ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-200' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'}`}
              >
-               {type === 'setup' ? 'Lưu mã bí mật' : 'Xác nhận'}
+               {type === 'setup' ? 'Lưu mã bí mật' : 
+                type === 'verify' ? 'Xác nhận' :
+                step === 'old' ? 'Tiếp tục' : 'Lưu mã mới'}
              </button>
+
+             {(type === 'verify' || (type === 'change' && step === 'old')) && currentPin && (
+               <div className="mt-3 pt-2 border-t border-slate-100">
+                 {!showForgotConfirm ? (
+                   <div className="text-center">
+                     <button 
+                       type="button"
+                       onClick={() => setShowForgotConfirm(true)}
+                       className="text-xs font-semibold text-slate-400 hover:text-red-500 transition-colors"
+                     >
+                       Quên mã PIN?
+                     </button>
+                   </div>
+                 ) : (
+                   <div className="bg-red-50 p-3 rounded-lg border border-red-100 mt-2">
+                     <p className="text-xs text-red-600 font-bold mb-3 text-center leading-relaxed">
+                       CẢNH BÁO: Quên mã PIN?
+                       <br/><br/>
+                       Tất cả các nút thiết lập (ngoại trừ Oseltamivir) và mã PIN sẽ bị xoá hoàn toàn. Bạn có chắc chắn?
+                     </p>
+                     <div className="flex gap-2">
+                       <button 
+                         type="button" 
+                         onClick={() => setShowForgotConfirm(false)} 
+                         className="flex-1 py-1.5 bg-slate-200 text-slate-700 text-xs font-bold rounded-lg"
+                       >
+                         Hủy
+                       </button>
+                       <button 
+                         type="button" 
+                         onClick={() => {
+                           if (onForgotPin) onForgotPin();
+                         }} 
+                         className="flex-1 py-1.5 bg-red-600 text-white text-xs font-bold rounded-lg shadow-sm"
+                       >
+                         Đồng ý
+                       </button>
+                     </div>
+                   </div>
+                 )}
+               </div>
+             )}
           </form>
         </motion.div>
       </div>

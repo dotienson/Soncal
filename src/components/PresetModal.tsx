@@ -27,6 +27,7 @@ export function PresetModal({
   const [maxDoseMg, setMaxDoseMg] = useState('');
   const [bottleVolume, setBottleVolume] = useState('');
   const [note, setNote] = useState('');
+  const [doseUnit, setDoseUnit] = useState('mg');
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingSaveData, setPendingSaveData] = useState<Preset | null>(null);
@@ -64,6 +65,7 @@ export function PresetModal({
       setMaxDoseMg(initialData.maxDoseMg?.toString() || '');
       setBottleVolume(initialData.bottleVolume?.toString() || '');
       setNote(initialData.note || '');
+      setDoseUnit(initialData.doseUnit || 'mg');
     } else {
       setName('');
       setDosePerKg('15');
@@ -76,6 +78,7 @@ export function PresetModal({
       setMaxDoseMg('');
       setBottleVolume('');
       setNote('');
+      setDoseUnit('mg');
     }
     setShowConfirm(false);
     setPendingSaveData(null);
@@ -115,6 +118,7 @@ export function PresetModal({
       timesPerDay: tPd,
       bottleVolume: bVol,
       unit: unit.trim() || (isSolid ? 'gói' : 'mL'),
+      doseUnit: doseUnit,
       isSolid,
       color,
       maxDoseMg: maxD,
@@ -159,19 +163,19 @@ export function PresetModal({
                       <span className="font-bold text-slate-800 text-sm text-right">{pendingSaveData.name}</span>
                    </div>
                    <div className="flex justify-between border-b border-slate-100 pb-2">
-                      <span className="text-slate-500 text-sm">Liều (mg/kg):</span>
-                      <span className="font-black text-rose-600 text-sm text-right">{pendingSaveData.dosePerKg} mg/kg</span>
+                      <span className="text-slate-500 text-sm">Liều ({doseUnit}/kg/lần):</span>
+                      <span className="font-black text-rose-600 text-sm text-right">{pendingSaveData.dosePerKg} {doseUnit}/kg/lần</span>
                    </div>
                    <div className="flex justify-between border-b border-slate-100 pb-2">
                       <span className="text-slate-500 text-sm">Hàm lượng:</span>
                       <span className="font-bold text-slate-800 text-sm text-right">
-                        {pendingSaveData.concentrationMg}mg / {pendingSaveData.isSolid ? '1' : pendingSaveData.concentrationMl} {pendingSaveData.unit}
+                        {pendingSaveData.concentrationMg}{doseUnit} / {pendingSaveData.isSolid ? '1' : pendingSaveData.concentrationMl} {pendingSaveData.unit}
                       </span>
                    </div>
                    {pendingSaveData.maxDoseMg && (
                      <div className="flex justify-between border-b border-slate-100 pb-2">
                         <span className="text-slate-500 text-sm">Liều Max:</span>
-                        <span className="font-bold text-rose-600 text-sm text-right">{pendingSaveData.maxDoseMg} mg</span>
+                        <span className="font-bold text-rose-600 text-sm text-right">{pendingSaveData.maxDoseMg} {doseUnit}</span>
                      </div>
                    )}
                    <div className="flex justify-between">
@@ -221,8 +225,18 @@ export function PresetModal({
           </div>
           
           <div className="grid grid-cols-2 gap-3">
-             <div className="bg-blue-50/50 p-2.5 rounded-xl border border-blue-100">
-               <label className="block text-[9.5px] font-bold text-blue-600 uppercase tracking-wider mb-1.5">Liều (mg/kg)</label>
+             <div className="bg-blue-50/50 p-2.5 rounded-xl border border-blue-100 relative">
+               <label className="block text-[9.5px] font-bold text-blue-600 uppercase tracking-wider mb-1.5 flex justify-between items-center">
+                 <span>Liều ({doseUnit}/kg/lần)</span>
+                 <select 
+                   value={doseUnit} 
+                   onChange={e => setDoseUnit(e.target.value)}
+                   className="bg-blue-100/50 text-blue-700 font-bold px-1 py-0.5 rounded outline-none border border-blue-200/50 cursor-pointer"
+                 >
+                   <option value="mg">mg</option>
+                   <option value="mcg">mcg</option>
+                 </select>
+               </label>
                <input 
                  type="text" 
                  inputMode="decimal" 
@@ -289,7 +303,7 @@ export function PresetModal({
           
           <div className="grid grid-cols-2 gap-3">
              <div>
-                 <label className="block text-[9.5px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Max liều (mg/lần)</label>
+                 <label className="block text-[9.5px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Max liều ({doseUnit}/lần)</label>
                  <input 
                    type="text" 
                    inputMode="decimal" 
