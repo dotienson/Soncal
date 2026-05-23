@@ -59,14 +59,6 @@ const calculateMath = (a: number, b: number, op: string) => {
   }
 };
 
-const triggerHaptic = () => {
-  if (typeof window !== "undefined" && navigator.vibrate) {
-    try {
-      navigator.vibrate(20);
-    } catch (e) {}
-  }
-};
-
 const formatWithThousandSeparator = (str: string | number | undefined) => {
   if (str === null || str === undefined) return "";
   const s = String(str);
@@ -102,7 +94,6 @@ const Btn = ({ onClick, className = "", children }: any) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
 
     setIsActive(true);
-    triggerHaptic();
     onClick();
 
     // Prevent default to stop focus and prevent native onClick from firing (avoid double fire)
@@ -472,6 +463,13 @@ export default function App() {
           </span>
         );
       }
+      if (char === ".") {
+        return (
+          <span key={i} className="text-red-500 mx-[1px]">
+            {char}
+          </span>
+        );
+      }
       return <span key={i}>{char}</span>;
     });
   };
@@ -553,6 +551,7 @@ export default function App() {
       if (/[\+\-\×\:]0$/.test(prev)) {
         return prev.slice(0, -1) + digit;
       }
+      if (prev.length >= 12) return prev;
       return prev + digit;
     });
   };
@@ -569,6 +568,7 @@ export default function App() {
       if (p.endsWith(".")) {
         return p.slice(0, -1) + op;
       }
+      if (p.length >= 12) return p;
       return p + op;
     });
   };
@@ -580,6 +580,7 @@ export default function App() {
       return;
     }
     setExpr((prev) => {
+      if (prev.length >= 12) return prev;
       const parts = prev.split(/[\+\-\×\:]/);
       const lastPart = parts[parts.length - 1];
       if (!lastPart.includes(".")) {
@@ -648,7 +649,6 @@ export default function App() {
   };
 
   const handlePresetClick = (preset: Preset) => {
-    triggerHaptic();
     let w = parseFloat(weightStr);
 
     if (isNaN(w) || w <= 0) {
@@ -1631,12 +1631,14 @@ export default function App() {
           setPendingAction(null);
         }}
         onSuccess={(pin) => {
+          if (pin !== secretPin) {
+            setSecretPin(pin);
+            localStorage.setItem("medCalc_secretPin", pin);
+          }
           if (
             askPinModalType === "create" ||
             askPinModalType === "change_pin"
           ) {
-            setSecretPin(pin);
-            localStorage.setItem("medCalc_secretPin", pin);
             setHasPromptedPin(true);
             localStorage.setItem("medCalc_hasPromptedPin", "true");
           }
@@ -1681,13 +1683,13 @@ export default function App() {
           <div
             className={`w-2 h-2 rounded-full shadow-sm ${keepAwake ? "bg-green-500" : "bg-red-500"}`}
           ></div>
-          <span className="text-[11px] text-slate-600 font-medium tracking-tight">
+          <span className="text-[11px] text-slate-400 font-medium tracking-tight">
             Giữ màn hình luôn sáng
           </span>
         </button>
         <button
           onClick={() => setSettingsOpen(true)}
-          className="flex items-center gap-1 cursor-pointer opacity-90 hover:opacity-100 transition-opacity text-slate-600"
+          className="flex items-center gap-1 cursor-pointer opacity-90 hover:opacity-100 transition-opacity text-slate-400"
         >
           <Settings2 className="w-3 h-3" />
           <span className="text-[11px] font-medium tracking-tight">
