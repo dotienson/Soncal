@@ -12,7 +12,9 @@ export function SettingsModal({
   opOrder,
   setOpOrder,
   isPremium,
-  onRequirePremium
+  onRequirePremium,
+  secretPin,
+  onChangePin
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -22,6 +24,8 @@ export function SettingsModal({
   setOpOrder: (o: OpOrder) => void;
   isPremium: boolean;
   onRequirePremium: () => void;
+  secretPin?: string;
+  onChangePin?: () => void;
 }) {
   const [showArch, setShowArch] = useState(false);
 
@@ -120,6 +124,39 @@ export function SettingsModal({
                       {op === '-' ? '−' : op}
                     </div>
                  ))}
+               </div>
+            </div>
+          </div>
+
+          {/* Bảo mật (Mã PIN) */}
+          <div>
+            <h3 className="font-semibold text-slate-700 mb-3 text-[14px] flex items-center gap-2 uppercase tracking-wide">
+               <Crown className="w-4 h-4 text-slate-400" /> Bảo mật tự động tính (PIN)
+               {!isPremium && <Crown className="w-3.5 h-3.5 text-amber-500 ml-1" fill="currentColor" />}
+            </h3>
+            <div className="relative bg-slate-50 p-4 rounded-xl border border-slate-200">
+               {!isPremium && (
+                 <div 
+                   className="absolute inset-[-4px] z-10 rounded-xl cursor-pointer bg-white/40 backdrop-blur-[1px]"
+                   onClick={() => {
+                      onClose();
+                      onRequirePremium();
+                   }}
+                 />
+               )}
+               <div className={`flex items-center justify-between ${!isPremium ? 'opacity-60' : ''}`}>
+                 <div>
+                   <p className="font-bold text-slate-800 text-sm">Số bảo mật</p>
+                   <p className="text-xs text-slate-500 mt-1 max-w-[200px]">Tránh ấn sửa/xoá vô tình các liều thuốc.</p>
+                 </div>
+                 <button
+                   onClick={() => {
+                      if (onChangePin) onChangePin();
+                   }}
+                   className={`px-4 py-2 font-bold text-xs rounded-lg transition-transform active:scale-95 shadow-sm border ${secretPin ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200' : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'}`}
+                 >
+                   {secretPin ? 'Đổi PIN' : 'Tạo PIN'}
+                 </button>
                </div>
             </div>
           </div>

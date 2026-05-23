@@ -8,6 +8,7 @@ import { Delete, Settings2, Calculator as CalcIcon, Menu, Pill, Crown, Trash2, I
 import { Preset, HistoryItem } from './types';
 import { PresetModal } from './components/PresetModal';
 import { SettingsModal } from './components/SettingsModal';
+import { PinModal } from './components/PinModal';
 let nativeWakeLock: any = null;
 
 const DEFAULT_PRESETS: Preset[] = [
@@ -139,6 +140,7 @@ const BottomTicker = () => {
   const messages = [
     "Luôn kiểm tra lại cân nặng với mẹ bé!",
     "Luôn hỏi về dị ứng thuốc, sàng lọc, tiền sử!",
+    "LUÔN KIỂM TRA KĨ LIỀU THUỐC KHI TÍNH",
     "Phần mềm của BS. Đỗ Tiến Sơn - Version 2.2"
   ];
 
@@ -199,6 +201,17 @@ export default function App() {
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [premiumCode, setPremiumCode] = useState('');
   const [premiumError, setPremiumError] = useState(false);
+
+  const [askPinModalType, setAskPinModalType] = useState<'create'|'verify_edit'|'verify_setting'|null>(null);
+  const [secretPin, setSecretPin] = useState<string>(() => localStorage.getItem('medCalc_secretPin') || '');
+  const [hasPromptedPin, setHasPromptedPin] = useState<boolean>(() => localStorage.getItem('medCalc_hasPromptedPin') === 'true');
+  const [pendingAction, setPendingAction] = useState<(()=>void)|null>(null);
+
+  useEffect(() => {
+    if (isPremium && !secretPin && !hasPromptedPin) {
+       setAskPinModalType('create');
+    }
+  }, [isPremium, secretPin, hasPromptedPin]);
 
   useEffect(() => {
     let idleTimer: ReturnType<typeof setTimeout>;
@@ -389,6 +402,19 @@ export default function App() {
   
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPreset, setEditingPreset] = useState<Preset | null>(null);
+
+  const openPresetModalWithAuth = (preset: Preset | null) => {
+    if (secretPin) {
+      setPendingAction(() => () => {
+         setEditingPreset(preset);
+         setModalOpen(true);
+      });
+      setAskPinModalType('verify_edit');
+    } else {
+      setEditingPreset(preset);
+      setModalOpen(true);
+    }
+  };
 
   useEffect(() => {
      localStorage.setItem('medCalc_presets_v2', JSON.stringify(presets));
@@ -1072,7 +1098,7 @@ export default function App() {
                        <span onClick={() => handlePresetClick(p)} className="block pr-1 py-0.5 leading-none">{p.name}</span>
                        {!isTamiflu && (
                          <div 
-                           onClick={(e) => { e.stopPropagation(); setEditingPreset(p); setModalOpen(true); }}
+                           onClick={(e) => { e.stopPropagation(); openPresetModalWithAuth(p); }}
                            className={`border-l py-0.5 ${iconColor} pl-1.5 opacity-60 hover:opacity-100`}
                          >
                            <Settings2 className={'w-3 h-3'} />
@@ -1084,7 +1110,7 @@ export default function App() {
                     className={`flex-shrink-0 bg-blue-50 text-blue-700 border border-blue-100 font-bold rounded-xl active:scale-95 transition-transform flex items-center justify-center shadow-sm p-2.5 relative`}
                     onClick={() => { 
                        if (isPremium) {
-                         setEditingPreset(null); setModalOpen(true); 
+                         openPresetModalWithAuth(null); 
                        } else {
                          setPremiumModalOpen(true);
                        }
@@ -1139,6 +1165,8 @@ export default function App() {
          setOpOrder={setOpOrder}
          isPremium={isPremium}
          onRequirePremium={() => setPremiumModalOpen(true)}
+         secretPin={secretPin}
+         onChangePin={() => setAskPinModalType('create')}
       />
 
       {premiumModalOpen && (
@@ -1199,6 +1227,33 @@ export default function App() {
           </div>
         </div>
       )}
+
+      <PinModal 
+        isOpen={askPinModalType !== null}
+        type={askPinModalType === 'create' ? 'setup' : 'verify'}
+        currentPin={secretPin}
+        onClose={() => {
+           if (askPinModalType === 'create') {
+              setHasPromptedPin(true);
+              localStorage.setItem('medCalc_hasPromptedPin', 'true');
+           }
+           setAskPinModalType(null);
+           setPendingAction(null);
+        }}
+        onSuccess={(pin) => {
+           if (askPinModalType === 'create') {
+              setSecretPin(pin);
+              localStorage.setItem('medCalc_secretPin', pin);
+              setHasPromptedPin(true);
+              localStorage.setItem('medCalc_hasPromptedPin', 'true');
+           }
+           setAskPinModalType(null);
+           if (pendingAction) {
+             pendingAction();
+             setPendingAction(null);
+           }
+        }}
+      />
 
       <PresetModal 
         isOpen={modalOpen} 
