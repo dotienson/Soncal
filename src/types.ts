@@ -17,7 +17,7 @@ export interface Preset {
 
 export interface HistoryItem {
   id: string;
-  type: 'math' | 'preset';
+  type: "math" | "preset";
   title?: string;
   expression: string | string[];
   rawExpression?: string | string[];
@@ -36,4 +36,3 @@ export interface HistoryItem {
   label?: string;
   note?: string;
 }
-
